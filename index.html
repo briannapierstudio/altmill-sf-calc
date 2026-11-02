@@ -285,6 +285,10 @@
           </select>
         </div>
         <div class="field">
+          <label>Plunge feed<span class="hint">% of cutting feed, capped at the Z max</span></label>
+          <input type="number" step="1" min="1" max="100" data-k="plungePct" data-dim="int"><span class="u">%</span>
+        </div>
+        <div class="field">
           <label>Fit to machine<span class="hint">auto-reduce depth if power, deflection or breakage limits are exceeded</span></label>
           <input type="checkbox" data-k="limit">
         </div>
@@ -393,12 +397,12 @@
 
 // cls → engagement defaults as multiples of tool diameter (before aggressiveness & rigidity)
 const CLASS = {
-  wood:       {slot:1.0,  prof:1.5, profW:0.50, ad:2.0, adW:0.30, pockW:0.45, ramp:10, plunge:0.50, peck:3.0},
-  plastic:    {slot:0.75, prof:1.5, profW:0.40, ad:2.0, adW:0.25, pockW:0.40, ramp:5,  plunge:0.40, peck:2.0},
-  composite:  {slot:0.5,  prof:1.0, profW:0.25, ad:1.5, adW:0.15, pockW:0.30, ramp:3,  plunge:0.30, peck:1.5},
-  nonferrous: {slot:0.3,  prof:1.0, profW:0.15, ad:2.0, adW:0.10, pockW:0.30, ramp:2,  plunge:0.30, peck:1.0},
-  ferrous:    {slot:0.1,  prof:0.5, profW:0.08, ad:1.5, adW:0.07, pockW:0.20, ramp:1.5,plunge:0.20, peck:0.5},
-  hard:       {slot:0.05, prof:0.3, profW:0.05, ad:1.0, adW:0.05, pockW:0.15, ramp:1,  plunge:0.15, peck:0.3},
+  wood:       {slot:1.0,  prof:1.5, profW:0.50, ad:2.0, adW:0.30, pockW:0.45, ramp:10, peck:3.0},
+  plastic:    {slot:0.75, prof:1.5, profW:0.40, ad:2.0, adW:0.25, pockW:0.40, ramp:5,  peck:2.0},
+  composite:  {slot:0.5,  prof:1.0, profW:0.25, ad:1.5, adW:0.15, pockW:0.30, ramp:3,  peck:1.5},
+  nonferrous: {slot:0.3,  prof:1.0, profW:0.15, ad:2.0, adW:0.10, pockW:0.30, ramp:2,  peck:1.0},
+  ferrous:    {slot:0.1,  prof:0.5, profW:0.08, ad:1.5, adW:0.07, pockW:0.20, ramp:1.5,peck:0.5},
+  hard:       {slot:0.05, prof:0.3, profW:0.05, ad:1.0, adW:0.05, pockW:0.15, ramp:1,  peck:0.3},
 };
 
 // [key, name, group, class, sfmLo, sfmHi, chip load @ 1/8 1/4 3/8 1/2", unit power hp/(in³/min), note]
@@ -515,7 +519,7 @@ const MACHINE_DEFAULT = {
 const STORE_KEY = 'altmill-sf-v2';
 const DEFAULT_STATE = {
   units:'in', tab:'calc', chartView:'dia',
-  mat:'hardwood', op:'profile', agg:50, coolant:'air', limit:true,
+  mat:'hardwood', op:'profile', agg:50, coolant:'air', limit:true, plungePct:10,
   docOv:null, wocOv:null, scallop:0.001, cutLen:0,
   toolId:'b-up14', toolEdited:false,
   tool:Object.assign({}, BUILTIN_TOOLS[1]),
@@ -679,7 +683,7 @@ function compute(s, t, adj){
   const fzProg = op==='drill' ? fpr/2 : feed/(rpm*z);
   const hex = op==='drill' ? fzProg : fzProg/thin;
 
-  const plunge = op==='drill' ? feed : Math.min(feed*c.plunge, M.feedZ);
+  const plunge = op==='drill' ? feed : Math.min(feed*s.plungePct/100, M.feedZ);
 
   // --- removal, power, force ---
   let mrr;
