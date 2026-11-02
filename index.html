@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Feeds">
+<title>Speeds & Feeds</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Roboto+Mono:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#17191a;
+    --panel:#212426;
+    --panel-2:#282b2d;
+    --border:#3a3f42;
+    --border-soft:#2f3335;
+    --metal:#c7ccd1;
+    --text:#e9ebec;
+    --text-dim:#8b9296;
+    --accent:#f2b705;
+    --accent-dim:#7a6113;
+    --screen-bg:#0a0d0b;
+    --screen-text:#4fe37a;
+    --screen-text-dim:#2b6b3f;
+    --danger:#e8543a;
+    --radius:6px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',system-ui,sans-serif;
+    padding-bottom:3rem;
+    min-height:100vh;
+  }
+  .wrap{max-width:480px;margin:0 auto;padding:0 16px;}
+
+  header{
+    padding:22px 16px 14px;
+    max-width:480px;margin:0 auto;
+    border-bottom:1px solid var(--border-soft);
+  }
+  .plate{
+    display:flex;align-items:baseline;justify-content:space-between;
+  }
+  h1{
+    font-family:'Oswald',sans-serif;
+    font-weight:600;
+    font-size:22px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    margin:0;
+    color:var(--metal);
+  }
+  .plate span{
+    font-family:'Roboto Mono',monospace;
+    font-size:11px;
+    color:var(--text-dim);
+    letter-spacing:0.05em;
+  }
+  .subtitle{
+    font-size:13px;
+    color:var(--text-dim);
+    margin:4px 0 0;
+  }
+
+  .section{margin-top:20px;}
+  .section-label{
+    font-family:'Oswald',sans-serif;
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--accent);
+    margin:0 0 8px;
+  }
+
+  .unit-toggle{
+    display:flex;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:3px;
+    gap:3px;
+  }
+  .unit-toggle button{
+    flex:1;
+    background:transparent;
+    border:none;
+    color:var(--text-dim);
+    font-family:'Oswald',sans-serif;
+    font-weight:600;
+    font-size:13px;
+    letter-spacing:0.05em;
+    padding:9px 0;
+    border-radius:4px;
+    cursor:pointer;
+  }
+  .unit-toggle button.active{
+    background:var(--accent);
+    color:#1a1500;
+  }
+
+  .chips{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    padding-bottom:4px;
+    scrollbar-width:none;
+  }
+  .chips::-webkit-scrollbar{display:none;}
+  .chip{
+    flex:0 0 auto;
+    background:var(--panel);
+    border:1px solid var(--border);
+    color:var(--text);
+    font-family:'Oswald',sans-serif;
+    font-size:12.5px;
+    font-weight:500;
+    letter-spacing:0.03em;
+    padding:9px 14px;
+    border-radius:999px;
+    white-space:nowrap;
+    cursor:pointer;
+  }
+  .chip.active{
+    background:var(--accent);
+    color:#1a1500;
+    border-color:var(--accent);
+    font-weight:600;
+  }
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:14px 14px 6px;
+  }
+  .field{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:10px 0;
+    border-bottom:1px solid var(--border-soft);
+    gap:10px;
+  }
+  .field:last-child{border-bottom:none;}
+  .field label{
+    font-size:13.5px;
+    color:var(--text);
+    flex:1;
+  }
+  .field .hint{
+    display:block;
+    font-size:11px;
+    color:var(--text-dim);
+    margin-top:2px;
+  }
+  .field input[type=number]{
+    width:92px;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    color:var(--screen-text);
+    font-family:'Roboto Mono',monospace;
+    font-size:15px;
+    font-weight:500;
+    text-align:right;
+    padding:8px 10px;
+    border-radius:4px;
+    -moz-appearance:textfield;
+  }
+  .field input[type=number]::-webkit-outer-spin-button,
+  .field input[type=number]::-webkit-inner-spin-button{
+    -webkit-appearance:none;margin:0;
+  }
+  .field input:focus{outline:none;border-color:var(--accent);}
+  .unit-suffix{
+    font-family:'Roboto Mono',monospace;
+    font-size:11.5px;
+    color:var(--text-dim);
+    width:32px;
+  }
+
+  .stepper{
+    display:flex;align-items:center;gap:6px;
+  }
+  .stepper button{
+    width:30px;height:30px;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    color:var(--metal);
+    font-size:16px;
+    font-weight:600;
+    border-radius:4px;
+    cursor:pointer;
+    line-height:1;
+  }
+  .stepper span{
+    font-family:'Roboto Mono',monospace;
+    font-size:15px;
+    color:var(--screen-text);
+    width:26px;
+    text-align:center;
+  }
+
+  .toggle-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:12px 2px 8px;
+  }
+  .toggle-row span{font-size:13px;color:var(--text-dim); font-family:'Oswald',sans-serif; letter-spacing:0.03em; text-transform:uppercase; font-weight:500;}
+  .switch{
+    width:44px;height:24px;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    border-radius:999px;
+    position:relative;
+    cursor:pointer;
+  }
+  .switch::after{
+    content:'';
+    position:absolute;
+    top:2px;left:2px;
+    width:18px;height:18px;
+    border-radius:50%;
+    background:var(--metal);
+    transition:transform .15s ease;
+  }
+  .switch.on{background:var(--accent-dim); border-color:var(--accent);}
+  .switch.on::after{transform:translateX(20px); background:var(--accent);}
+
+  .mrr-fields{display:none;}
+  .mrr-fields.show{display:block;}
+
+  .screen{
+    background:var(--screen-bg);
+    border:1px solid #000;
+    border-radius:var(--radius);
+    padding:16px 16px 10px;
+    box-shadow:inset 0 0 0 1px #1c211d;
+  }
+  .screen-row{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    padding:8px 0;
+    border-bottom:1px dashed #1e2b21;
+  }
+  .screen-row:last-of-type{border-bottom:none;}
+  .screen-key{
+    font-family:'Roboto Mono',monospace;
+    font-size:13px;
+    color:var(--screen-text-dim);
+    letter-spacing:0.04em;
+  }
+  .screen-val{
+    font-family:'Roboto Mono',monospace;
+    font-size:24px;
+    font-weight:700;
+    color:var(--screen-text);
+    text-shadow:0 0 6px rgba(79,227,122,0.35);
+  }
+  .screen-val small{
+    font-size:12px;
+    font-weight:500;
+    color:var(--screen-text-dim);
+    margin-left:4px;
+  }
+  .softkeys{
+    display:flex;
+    gap:8px;
+    margin-top:12px;
+  }
+  .softkeys button{
+    flex:1;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    color:var(--text-dim);
+    font-family:'Oswald',sans-serif;
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    padding:9px 0;
+    border-radius:4px;
+    cursor:pointer;
+  }
+  .softkeys button.reset{color:var(--danger); border-color:#4a2a22;}
+
+  .home-instructions{
+    display:none;
+    margin-top:10px;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:12px 14px;
+    font-size:13px;
+    line-height:1.6;
+    color:var(--text);
+  }
+  .home-instructions.show{display:block;}
+  .home-instructions p{margin:0 0 6px;}
+  .home-instructions p:last-child{margin-bottom:0;}
+
+  .torque-badge{
+    font-family:'Oswald',sans-serif;
+    font-size:11.5px;
+    font-weight:600;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    padding:4px 10px;
+    border-radius:999px;
+  }
+  .torque-badge.full{background:var(--accent-dim); color:var(--accent);}
+  .torque-badge.reduced{background:#33302a; color:var(--text-dim);}
+
+  .clamp-warning{
+    display:none;
+    margin-top:10px;
+    background:#2e1f16;
+    border:1px solid #4a2a13;
+    border-radius:var(--radius);
+    padding:10px 12px;
+    font-size:12.5px;
+    line-height:1.5;
+    color:#f0b27a;
+  }
+  .clamp-warning.show{display:block;}
+  .clamp-warning p{margin:0 0 6px;}
+  .clamp-warning p:last-child{margin-bottom:0;}
+
+  .note{
+    font-size:11.5px;
+    line-height:1.5;
+    color:var(--text-dim);
+    margin:16px 0 0;
+    padding:0 2px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="plate">
+    <h1>Speeds &amp; Feeds</h1>
+    <span id="matBadge">ALU</span>
+  </div>
+  <p class="subtitle">Shop-floor RPM &amp; feed rate calculator</p>
+</header>
+
+<div class="wrap">
+
+  <div class="section">
+    <div class="section-label">Units</div>
+    <div class="unit-toggle">
+      <button id="btnIn" class="active">Inch</button>
+      <button id="btnMm">Metric</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Material</div>
+    <div class="chips" id="chips"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Tool</div>
+    <div class="card">
+      <div class="field">
+        <div>
+          <label for="dia">Cutter diameter</label>
+        </div>
+        <input type="number" id="dia" step="0.001" value="0.25">
+        <span class="unit-suffix" id="diaUnit">in</span>
+      </div>
+      <div class="field">
+        <label>Flutes</label>
+        <div class="stepper">
+          <button id="fluteDown">–</button>
+          <span id="fluteVal">2</span>
+          <button id="fluteUp">+</button>
+        </div>
+      </div>
+      <div class="field" style="flex-direction:column; align-items:stretch; gap:8px;">
+        <label>Bit style</label>
+        <div class="unit-toggle">
+          <button id="btnSquare" class="active">Square end mill</button>
+          <button id="btnRound">Round-over bit</button>
+        </div>
+        <span class="hint" id="bitHint">Constant cutting diameter through the full pass.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Cutting data</div>
+    <div class="card">
+      <div class="field">
+        <div>
+          <label for="sfm">Cutting speed</label>
+          <span class="hint" id="sfmHint">SFM</span>
+        </div>
+        <input type="number" id="sfm" step="1" value="500">
+        <span class="unit-suffix" id="sfmUnit">sfm</span>
+      </div>
+      <div class="field">
+        <div>
+          <label for="chip">Chip load / tooth</label>
+          <span class="hint">per flute, per revolution</span>
+        </div>
+        <input type="number" id="chip" step="0.0001" value="0.003">
+        <span class="unit-suffix" id="chipUnit">in</span>
+      </div>
+      <div class="toggle-row">
+        <span>Calculate MRR</span>
+        <div class="switch" id="mrrSwitch"></div>
+      </div>
+      <div class="mrr-fields" id="mrrFields">
+        <div class="field">
+          <label for="doc">Depth of cut</label>
+          <input type="number" id="doc" step="0.001" value="0.1">
+          <span class="unit-suffix" id="docUnit">in</span>
+        </div>
+        <div class="field">
+          <label for="woc">Width of cut</label>
+          <input type="number" id="woc" step="0.001" value="0.25">
+          <span class="unit-suffix" id="wocUnit">in</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Spindle</div>
+    <div class="card">
+      <div class="field">
+        <div>
+          <label>Machine</label>
+          <span class="hint">Sienci ATC 2.2kW · AltMill Mk2 4x4</span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="rpmMin">Min RPM</label>
+        <input type="number" id="rpmMin" step="100" value="7500">
+      </div>
+      <div class="field">
+        <label for="rpmMax">Max RPM</label>
+        <input type="number" id="rpmMax" step="100" value="24000">
+      </div>
+      <div class="field">
+        <div>
+          <label for="rpmFullTorque">Full torque from</label>
+          <span class="hint">constant torque band starts here</span>
+        </div>
+        <input type="number" id="rpmFullTorque" step="100" value="18000">
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Travel limits</div>
+    <div class="card">
+      <div class="field">
+        <div>
+          <label for="feedMax">Max feed rate (X/Y)</label>
+          <span class="hint">gantry rapid/cutting ceiling</span>
+        </div>
+        <input type="number" id="feedMax" step="1" value="590">
+        <span class="unit-suffix" id="feedMaxUnit">ipm</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Readout</div>
+    <div class="screen">
+      <div class="screen-row">
+        <span class="screen-key">S — spindle</span>
+        <span class="screen-val" id="outRpm">0<small>rpm</small></span>
+      </div>
+      <div class="screen-row">
+        <span class="screen-key">F — feed rate</span>
+        <span class="screen-val" id="outFeed">0<small>ipm</small></span>
+      </div>
+      <div class="screen-row" id="mrrRow" style="display:none;">
+        <span class="screen-key">MRR</span>
+        <span class="screen-val" id="outMrr">0<small>in³/min</small></span>
+      </div>
+      <div class="screen-row" id="torqueRow">
+        <span class="screen-key">Torque band</span>
+        <span class="torque-badge" id="torqueBadge">—</span>
+      </div>
+    </div>
+    <div class="clamp-warning" id="clampWarning"></div>
+    <div class="softkeys">
+      <button class="reset" id="resetBtn">Reset</button>
+      <button id="addHomeBtn">Add to home</button>
+    </div>
+    <div class="home-instructions" id="homeInstructions">
+      <p>1. Tap the <strong>Share</strong> icon in Safari's toolbar (square with an arrow up).</p>
+      <p>2. Scroll down and tap <strong>Add to Home Screen</strong>.</p>
+      <p>3. Tap <strong>Add</strong> in the top right.</p>
+      <p style="margin-top:8px; color:var(--text-dim);">This only works in Safari — Chrome and other browsers on iOS don't expose this option.</p>
+    </div>
+  </div>
+
+  <p class="note">
+    Material presets are typical carbide end-mill starting points for a 1/4"–3/8" tool. Scale chip load up for larger cutters and down for smaller or less rigid setups. Round-over and other profile bits engage the material at a changing depth through the cut, so treat that mode's numbers as a cautious starting point and dial feed down further on figured or veneered faces. Plywood's glue lines are abrasive and prone to splintering on the exit face — a sharp bit and a sacrificial backer help more than any speed adjustment. Always verify against your tool manufacturer's data.
+  </p>
+
+</div>
+
+<script>
+(function(){
+  const materials = [
+    { key:'alu',   label:'Aluminum',  sfm:500, chip:0.0030 },
+    { key:'brass', label:'Brass',     sfm:400, chip:0.0030 },
+    { key:'mild',  label:'Mild steel',sfm:200, chip:0.0020 },
+    { key:'ss',    label:'Stainless', sfm:150, chip:0.0015 },
+    { key:'ci',    label:'Cast iron', sfm:250, chip:0.0030 },
+    { key:'ti',    label:'Titanium',  sfm:100, chip:0.0010 },
+    { key:'wood',  label:'Wood/MDF',  sfm:3000,chip:0.0080 },
+    { key:'ply',   label:'Plywood',   sfm:3000,chip:0.0090 },
+    { key:'plas',  label:'Plastic',   sfm:600, chip:0.0040 },
+  ];
+
+  let unit = 'in';
+  let activeMat = 'alu';
+  let flutes = 2;
+  let mrrOn = false;
+  let bitStyle = 'square';
+
+  const $ = id => document.getElementById(id);
+  const chipsEl = $('chips');
+
+  materials.forEach(m=>{
+    const b = document.createElement('button');
+    b.className = 'chip' + (m.key===activeMat ? ' active':'');
+    b.textContent = m.label;
+    b.dataset.key = m.key;
+    b.addEventListener('click', ()=>selectMaterial(m.key));
+    chipsEl.appendChild(b);
+  });
+
+  function selectMaterial(key){
+    activeMat = key;
+    [...chipsEl.children].forEach(c=> c.classList.toggle('active', c.dataset.key===key));
+    const m = materials.find(x=>x.key===key);
+    $('matBadge').textContent = m.label.toUpperCase().replace('/', ' / ');
+    const factor = bitStyle==='round' ? 0.6 : 1;
+    const sfmVal = m.sfm*factor;
+    const chipVal = m.chip*factor;
+    if(unit==='in'){
+      $('sfm').value = round(sfmVal,0);
+      $('chip').value = round(chipVal,4);
+    } else {
+      $('sfm').value = round(sfmVal*0.3048,0);
+      $('chip').value = round(chipVal*25.4,3);
+    }
+    calc();
+  }
+
+  function round(n,d){
+    const f = Math.pow(10,d);
+    return Math.round(n*f)/f;
+  }
+
+  function setUnit(u){
+    if(u===unit) return;
+    const dia = parseFloat($('dia').value)||0;
+    const sfm = parseFloat($('sfm').value)||0;
+    const chip = parseFloat($('chip').value)||0;
+    const doc = parseFloat($('doc').value)||0;
+    const woc = parseFloat($('woc').value)||0;
+    const feedMax = parseFloat($('feedMax').value)||0;
+
+    if(u==='mm'){
+      $('dia').value = round(dia*25.4,2);
+      $('sfm').value = round(sfm*0.3048,0);
+      $('chip').value = round(chip*25.4,3);
+      $('doc').value = round(doc*25.4,2);
+      $('woc').value = round(woc*25.4,2);
+      $('feedMax').value = round(feedMax*25.4,0);
+      $('feedMaxUnit').textContent='mm/min';
+      $('diaUnit').textContent='mm';
+      $('sfmUnit').textContent='m/min';
+      $('sfmHint').textContent='Vc';
+      $('chipUnit').textContent='mm';
+      $('docUnit').textContent='mm';
+      $('wocUnit').textContent='mm';
+      $('btnMm').classList.add('active');
+      $('btnIn').classList.remove('active');
+    } else {
+      $('dia').value = round(dia/25.4,3);
+      $('sfm').value = round(sfm/0.3048,0);
+      $('chip').value = round(chip/25.4,4);
+      $('doc').value = round(doc/25.4,3);
+      $('woc').value = round(woc/25.4,3);
+      $('feedMax').value = round(feedMax/25.4,0);
+      $('feedMaxUnit').textContent='ipm';
+      $('diaUnit').textContent='in';
+      $('sfmUnit').textContent='sfm';
+      $('sfmHint').textContent='SFM';
+      $('chipUnit').textContent='in';
+      $('docUnit').textContent='in';
+      $('wocUnit').textContent='in';
+      $('btnIn').classList.add('active');
+      $('btnMm').classList.remove('active');
+    }
+    unit = u;
+    calc();
+  }
+
+  $('btnIn').addEventListener('click', ()=>setUnit('in'));
+  $('btnMm').addEventListener('click', ()=>setUnit('mm'));
+
+  function setBitStyle(style){
+    bitStyle = style;
+    $('btnSquare').classList.toggle('active', style==='square');
+    $('btnRound').classList.toggle('active', style==='round');
+    $('bitHint').textContent = style==='round'
+      ? 'Cutting diameter varies through the profile — chip load defaults are pulled back to keep edge quality on the curve.'
+      : 'Constant cutting diameter through the full pass.';
+    selectMaterial(activeMat);
+  }
+  $('btnSquare').addEventListener('click', ()=>setBitStyle('square'));
+  $('btnRound').addEventListener('click', ()=>setBitStyle('round'));
+
+  $('fluteUp').addEventListener('click', ()=>{ flutes=Math.min(flutes+1,12); $('fluteVal').textContent=flutes; calc(); });
+  $('fluteDown').addEventListener('click', ()=>{ flutes=Math.max(flutes-1,1); $('fluteVal').textContent=flutes; calc(); });
+
+  $('mrrSwitch').addEventListener('click', ()=>{
+    mrrOn = !mrrOn;
+    $('mrrSwitch').classList.toggle('on', mrrOn);
+    $('mrrFields').classList.toggle('show', mrrOn);
+    $('mrrRow').style.display = mrrOn ? 'flex' : 'none';
+    calc();
+  });
+
+  ['dia','sfm','chip','doc','woc','rpmMin','rpmMax','rpmFullTorque','feedMax'].forEach(id=>{
+    $(id).addEventListener('input', calc);
+  });
+
+  $('resetBtn').addEventListener('click', ()=>{
+    flutes = 2;
+    $('fluteVal').textContent = 2;
+    bitStyle = 'square';
+    $('btnSquare').classList.add('active');
+    $('btnRound').classList.remove('active');
+    $('bitHint').textContent = 'Constant cutting diameter through the full pass.';
+    mrrOn = false;
+    $('mrrSwitch').classList.remove('on');
+    $('mrrFields').classList.remove('show');
+    $('mrrRow').style.display = 'none';
+    $('dia').value = unit==='in' ? 0.25 : 6.35;
+    $('feedMax').value = unit==='in' ? 590 : 14986;
+    setUnit(unit);
+    selectMaterial('alu');
+  });
+
+  $('addHomeBtn').addEventListener('click', ()=>{
+    $('homeInstructions').classList.toggle('show');
+  });
+
+  function calc(){
+    const dia = parseFloat($('dia').value)||0;
+    const sfm = parseFloat($('sfm').value)||0;
+    const chip = parseFloat($('chip').value)||0;
+    const rpmMin = parseFloat($('rpmMin').value)||0;
+    const rpmMax = parseFloat($('rpmMax').value)||Infinity;
+    const fullTorque = parseFloat($('rpmFullTorque').value)||Infinity;
+    const K = unit==='in' ? 12 : 1000;
+
+    let rawRpm = dia>0 ? (sfm*K)/(Math.PI*dia) : 0;
+    rawRpm = Math.max(rawRpm,0);
+    const rpm = Math.min(Math.max(rawRpm, rpmMin), rpmMax);
+    const rawFeed = rpm*flutes*chip;
+    const feedMax = parseFloat($('feedMax').value)||Infinity;
+    const feed = Math.min(rawFeed, feedMax);
+
+    $('outRpm').innerHTML = Math.round(rpm).toLocaleString() + '<small>rpm</small>';
+    $('outFeed').innerHTML = round(feed,1) + '<small>' + (unit==='in'?'ipm':'mm/min') + '</small>';
+
+    const warnings = [];
+    if(dia>0 && Math.round(rawRpm)!==Math.round(rpm)){
+      const achievedSfm = (rpm*Math.PI*dia)/K;
+      const sfmLabel = unit==='in' ? 'sfm' : 'm/min';
+      if(rawRpm > rpmMax){
+        warnings.push('Calculated ' + Math.round(rawRpm).toLocaleString() + ' rpm exceeds max — capped at ' + Math.round(rpm).toLocaleString() + ' rpm, about ' + round(achievedSfm,0) + ' ' + sfmLabel + ' actual, slower than the ' + round(sfm,0) + ' set.');
+      } else {
+        warnings.push('Calculated ' + Math.round(rawRpm).toLocaleString() + ' rpm is below spindle minimum — running at ' + Math.round(rpm).toLocaleString() + ' rpm instead, about ' + round(achievedSfm,0) + ' ' + sfmLabel + ' actual, more aggressive than the ' + round(sfm,0) + ' set. Consider a larger diameter tool or a lighter cut.');
+      }
+    }
+    if(Math.round(rawFeed) > Math.round(feedMax)){
+      warnings.push('Calculated feed of ' + round(rawFeed,1) + ' ' + (unit==='in'?'ipm':'mm/min') + ' is beyond the gantry\'s max travel speed — capped at ' + round(feedMax,1) + '. Chip load per tooth will be lower than set at this feed.');
+    }
+    const clampWarn = $('clampWarning');
+    if(warnings.length){
+      clampWarn.innerHTML = warnings.map(w=>'<p>'+w+'</p>').join('');
+      clampWarn.classList.add('show');
+    } else {
+      clampWarn.classList.remove('show');
+    }
+
+    const badge = $('torqueBadge');
+    if(rpm >= fullTorque){
+      badge.textContent = 'Full torque';
+      badge.className = 'torque-badge full';
+    } else {
+      badge.textContent = 'Reduced torque';
+      badge.className = 'torque-badge reduced';
+    }
+
+    if(mrrOn){
+      const doc = parseFloat($('doc').value)||0;
+      const woc = parseFloat($('woc').value)||0;
+      let mrr, mrrUnit;
+      if(unit==='in'){
+        mrr = feed*doc*woc;
+        mrrUnit = 'in³/min';
+      } else {
+        mrr = (feed*doc*woc)/1000;
+        mrrUnit = 'cm³/min';
+      }
+      $('outMrr').innerHTML = round(mrr,2) + '<small>' + mrrUnit + '</small>';
+    }
+  }
+
+  selectMaterial('alu');
+  calc();
+})();
+</script>
+
+</body>
+</html>
