@@ -2,739 +2,1124 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="apple-mobile-web-app-title" content="Feeds">
-<title>Speeds & Feeds</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Roboto+Mono:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AltMill Speeds & Feeds</title>
 <style>
+  /* Fully offline: system fonts only (Bahnschrift / Consolas / Segoe UI ship with Windows 10/11). */
   :root{
-    --bg:#17191a;
-    --panel:#212426;
-    --panel-2:#282b2d;
-    --border:#3a3f42;
-    --border-soft:#2f3335;
+    --bg:#151718;
+    --panel:#1f2224;
+    --panel-2:#272a2d;
+    --border:#373c3f;
+    --border-soft:#2c3033;
     --metal:#c7ccd1;
     --text:#e9ebec;
     --text-dim:#8b9296;
     --accent:#f2b705;
-    --accent-dim:#7a6113;
+    --accent-dim:#6e5810;
     --screen-bg:#0a0d0b;
     --screen-text:#4fe37a;
-    --screen-text-dim:#2b6b3f;
+    --screen-text-dim:#2f7a48;
+    --warn:#f0b27a;
     --danger:#e8543a;
+    --ok:#4fe37a;
     --radius:6px;
+    --f-head:'Bahnschrift','Oswald','Arial Narrow',sans-serif;
+    --f-mono:'Consolas','Cascadia Mono','Roboto Mono',monospace;
+    --f-body:'Segoe UI','Inter',system-ui,sans-serif;
   }
-  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
-  body{
-    background:var(--bg);
-    color:var(--text);
-    font-family:'Inter',system-ui,sans-serif;
-    padding-bottom:3rem;
-    min-height:100vh;
-  }
-  .wrap{max-width:480px;margin:0 auto;padding:0 16px;}
+  body{background:var(--bg);color:var(--text);font-family:var(--f-body);font-size:13.5px;min-height:100vh;}
+  button,select,input{font:inherit;color:inherit;}
 
-  header{
-    padding:22px 16px 14px;
-    max-width:480px;margin:0 auto;
-    border-bottom:1px solid var(--border-soft);
+  /* ---------- top bar ---------- */
+  .topbar{
+    display:flex;align-items:center;gap:20px;
+    padding:10px 20px;border-bottom:1px solid var(--border-soft);
+    background:#111314;position:sticky;top:0;z-index:5;
   }
-  .plate{
-    display:flex;align-items:baseline;justify-content:space-between;
+  .brand h1{
+    font-family:var(--f-head);font-stretch:semi-condensed;font-weight:700;
+    font-size:20px;letter-spacing:.06em;text-transform:uppercase;margin:0;color:var(--metal);
   }
-  h1{
-    font-family:'Oswald',sans-serif;
-    font-weight:600;
-    font-size:22px;
-    letter-spacing:0.06em;
-    text-transform:uppercase;
-    margin:0;
-    color:var(--metal);
+  .brand span{display:block;font-family:var(--f-mono);font-size:11px;color:var(--text-dim);margin-top:1px;}
+  .tabs{display:flex;gap:4px;flex:1;}
+  .tabs button{
+    background:transparent;border:1px solid transparent;color:var(--text-dim);
+    font-family:var(--f-head);font-stretch:semi-condensed;font-weight:600;font-size:13px;
+    letter-spacing:.06em;text-transform:uppercase;padding:7px 14px;border-radius:4px;cursor:pointer;
   }
-  .plate span{
-    font-family:'Roboto Mono',monospace;
-    font-size:11px;
-    color:var(--text-dim);
-    letter-spacing:0.05em;
-  }
-  .subtitle{
-    font-size:13px;
-    color:var(--text-dim);
-    margin:4px 0 0;
-  }
+  .tabs button:hover{color:var(--text);}
+  .tabs button.active{color:var(--accent);border-color:var(--accent-dim);background:#1d1a0e;}
 
-  .section{margin-top:20px;}
-  .section-label{
-    font-family:'Oswald',sans-serif;
-    font-size:11px;
-    font-weight:600;
-    letter-spacing:0.14em;
-    text-transform:uppercase;
-    color:var(--accent);
-    margin:0 0 8px;
+  .seg{display:flex;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:3px;gap:3px;}
+  .seg button{
+    flex:1;background:transparent;border:none;color:var(--text-dim);
+    font-family:var(--f-head);font-stretch:semi-condensed;font-weight:600;font-size:12.5px;letter-spacing:.05em;
+    padding:6px 12px;border-radius:4px;cursor:pointer;white-space:nowrap;
   }
+  .seg button.active{background:var(--accent);color:#1a1500;}
 
-  .unit-toggle{
-    display:flex;
-    background:var(--panel);
-    border:1px solid var(--border);
-    border-radius:var(--radius);
-    padding:3px;
-    gap:3px;
-  }
-  .unit-toggle button{
-    flex:1;
-    background:transparent;
-    border:none;
-    color:var(--text-dim);
-    font-family:'Oswald',sans-serif;
-    font-weight:600;
-    font-size:13px;
-    letter-spacing:0.05em;
-    padding:9px 0;
-    border-radius:4px;
-    cursor:pointer;
-  }
-  .unit-toggle button.active{
-    background:var(--accent);
-    color:#1a1500;
-  }
+  main{padding:16px 20px 40px;}
+  .tab{display:none;}
+  .tab.active{display:block;}
 
-  .chips{
-    display:flex;
-    gap:8px;
-    overflow-x:auto;
-    padding-bottom:4px;
-    scrollbar-width:none;
-  }
-  .chips::-webkit-scrollbar{display:none;}
-  .chip{
-    flex:0 0 auto;
-    background:var(--panel);
-    border:1px solid var(--border);
-    color:var(--text);
-    font-family:'Oswald',sans-serif;
-    font-size:12.5px;
-    font-weight:500;
-    letter-spacing:0.03em;
-    padding:9px 14px;
-    border-radius:999px;
-    white-space:nowrap;
-    cursor:pointer;
-  }
-  .chip.active{
-    background:var(--accent);
-    color:#1a1500;
-    border-color:var(--accent);
-    font-weight:600;
-  }
+  /* ---------- panels & fields ---------- */
+  .calc-grid{display:grid;grid-template-columns:330px 310px minmax(420px,1fr);gap:16px;align-items:start;}
+  @media (max-width:1180px){.calc-grid{grid-template-columns:1fr 1fr;} .readout-col{grid-column:1 / -1;}}
+  @media (max-width:760px){.calc-grid{grid-template-columns:1fr;}}
+  .col{display:flex;flex-direction:column;gap:14px;}
 
-  .card{
-    background:var(--panel);
-    border:1px solid var(--border);
-    border-radius:var(--radius);
-    padding:14px 14px 6px;
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;}
+  .label{
+    font-family:var(--f-head);font-stretch:semi-condensed;font-size:11.5px;font-weight:600;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 8px;
+    display:flex;justify-content:space-between;align-items:center;
   }
-  .field{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:10px 0;
-    border-bottom:1px solid var(--border-soft);
-    gap:10px;
-  }
+  .label .sub{color:var(--text-dim);letter-spacing:.04em;text-transform:none;font-family:var(--f-body);font-weight:400;font-size:11.5px;}
+  .field{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-soft);}
   .field:last-child{border-bottom:none;}
-  .field label{
-    font-size:13.5px;
-    color:var(--text);
-    flex:1;
+  .field > label{flex:1;font-size:13px;}
+  .field .hint{display:block;font-size:11px;color:var(--text-dim);margin-top:1px;}
+  .field input[type=number], .field input[type=text]{
+    width:96px;background:var(--panel-2);border:1px solid var(--border);color:var(--screen-text);
+    font-family:var(--f-mono);font-size:14px;text-align:right;padding:6px 8px;border-radius:4px;
   }
-  .field .hint{
-    display:block;
-    font-size:11px;
-    color:var(--text-dim);
-    margin-top:2px;
+  .field input[type=text]{width:240px;text-align:left;color:var(--text);font-family:var(--f-body);font-size:13px;}
+  .field input::placeholder{color:var(--screen-text-dim);}
+  .field input:focus, select:focus{outline:none;border-color:var(--accent);}
+  .field .u{font-family:var(--f-mono);font-size:11px;color:var(--text-dim);width:54px;}
+  select{
+    background:var(--panel-2);border:1px solid var(--border);border-radius:4px;padding:6px 8px;
+    font-size:13px;color:var(--text);max-width:100%;
   }
-  .field input[type=number]{
-    width:92px;
-    background:var(--panel-2);
-    border:1px solid var(--border);
-    color:var(--screen-text);
-    font-family:'Roboto Mono',monospace;
-    font-size:15px;
-    font-weight:500;
-    text-align:right;
-    padding:8px 10px;
-    border-radius:4px;
-    -moz-appearance:textfield;
-  }
-  .field input[type=number]::-webkit-outer-spin-button,
-  .field input[type=number]::-webkit-inner-spin-button{
-    -webkit-appearance:none;margin:0;
-  }
-  .field input:focus{outline:none;border-color:var(--accent);}
-  .unit-suffix{
-    font-family:'Roboto Mono',monospace;
-    font-size:11.5px;
-    color:var(--text-dim);
-    width:32px;
-  }
+  select.wide{width:100%;}
+  optgroup{color:var(--accent);font-style:normal;}
+  option{color:var(--text);background:var(--panel-2);}
+  input[type=range]{width:100%;accent-color:var(--accent);}
+  input[type=checkbox]{accent-color:var(--accent);width:16px;height:16px;}
 
-  .stepper{
-    display:flex;align-items:center;gap:6px;
+  .btn{
+    background:var(--panel-2);border:1px solid var(--border);color:var(--metal);
+    font-family:var(--f-head);font-stretch:semi-condensed;font-weight:600;font-size:12px;letter-spacing:.08em;
+    text-transform:uppercase;padding:7px 12px;border-radius:4px;cursor:pointer;
   }
-  .stepper button{
-    width:30px;height:30px;
-    background:var(--panel-2);
-    border:1px solid var(--border);
-    color:var(--metal);
-    font-size:16px;
-    font-weight:600;
-    border-radius:4px;
-    cursor:pointer;
-    line-height:1;
-  }
-  .stepper span{
-    font-family:'Roboto Mono',monospace;
-    font-size:15px;
-    color:var(--screen-text);
-    width:26px;
-    text-align:center;
-  }
+  .btn:hover{border-color:var(--accent);color:var(--accent);}
+  .btn.primary{background:var(--accent);color:#1a1500;border-color:var(--accent);}
+  .btn.danger{color:var(--danger);border-color:#4a2a22;}
+  .btn.small{padding:4px 8px;font-size:11px;}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
 
-  .toggle-row{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:12px 2px 8px;
-  }
-  .toggle-row span{font-size:13px;color:var(--text-dim); font-family:'Oswald',sans-serif; letter-spacing:0.03em; text-transform:uppercase; font-weight:500;}
-  .switch{
-    width:44px;height:24px;
-    background:var(--panel-2);
-    border:1px solid var(--border);
-    border-radius:999px;
-    position:relative;
-    cursor:pointer;
-  }
-  .switch::after{
-    content:'';
-    position:absolute;
-    top:2px;left:2px;
-    width:18px;height:18px;
-    border-radius:50%;
-    background:var(--metal);
-    transition:transform .15s ease;
-  }
-  .switch.on{background:var(--accent-dim); border-color:var(--accent);}
-  .switch.on::after{transform:translateX(20px); background:var(--accent);}
+  .mat-info{font-size:12px;color:var(--text-dim);line-height:1.5;margin-top:8px;}
+  .mat-info b{color:var(--text);font-weight:600;}
+  .mat-info .note{margin-top:6px;color:var(--warn);}
+  .agg-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--text-dim);margin-top:2px;}
+  .agg-val{font-family:var(--f-mono);color:var(--screen-text);font-size:12px;}
 
-  .mrr-fields{display:none;}
-  .mrr-fields.show{display:block;}
+  /* ---------- readout ---------- */
+  .screen{background:var(--screen-bg);border:1px solid #000;border-radius:var(--radius);padding:14px 16px;box-shadow:inset 0 0 0 1px #1c211d;}
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 18px;}
+  .tile{border-bottom:1px dashed #1e2b21;padding-bottom:8px;}
+  .tile .k{font-family:var(--f-mono);font-size:11.5px;color:var(--screen-text-dim);letter-spacing:.04em;display:flex;justify-content:space-between;}
+  .tile .k em{font-style:normal;color:#7a6113;}
+  .tile .v{font-family:var(--f-mono);font-size:26px;font-weight:700;color:var(--screen-text);text-shadow:0 0 6px rgba(79,227,122,.35);white-space:nowrap;}
+  .tile .v small{font-size:12px;font-weight:400;color:var(--screen-text-dim);margin-left:4px;text-shadow:none;}
+  .tile.big .v{font-size:34px;}
+  .gcode{display:flex;align-items:center;justify-content:space-between;margin-top:12px;gap:10px;}
+  .gcode code{font-family:var(--f-mono);font-size:16px;color:var(--screen-text);}
 
-  .screen{
-    background:var(--screen-bg);
-    border:1px solid #000;
-    border-radius:var(--radius);
-    padding:16px 16px 10px;
-    box-shadow:inset 0 0 0 1px #1c211d;
-  }
-  .screen-row{
-    display:flex;
-    align-items:baseline;
-    justify-content:space-between;
-    padding:8px 0;
-    border-bottom:1px dashed #1e2b21;
-  }
-  .screen-row:last-of-type{border-bottom:none;}
-  .screen-key{
-    font-family:'Roboto Mono',monospace;
-    font-size:13px;
-    color:var(--screen-text-dim);
-    letter-spacing:0.04em;
-  }
-  .screen-val{
-    font-family:'Roboto Mono',monospace;
-    font-size:24px;
-    font-weight:700;
-    color:var(--screen-text);
-    text-shadow:0 0 6px rgba(79,227,122,0.35);
-  }
-  .screen-val small{
-    font-size:12px;
-    font-weight:500;
-    color:var(--screen-text-dim);
-    margin-left:4px;
-  }
-  .softkeys{
-    display:flex;
-    gap:8px;
-    margin-top:12px;
-  }
-  .softkeys button{
-    flex:1;
-    background:var(--panel-2);
-    border:1px solid var(--border);
-    color:var(--text-dim);
-    font-family:'Oswald',sans-serif;
-    font-size:11px;
-    font-weight:600;
-    letter-spacing:0.08em;
-    text-transform:uppercase;
-    padding:9px 0;
-    border-radius:4px;
-    cursor:pointer;
-  }
-  .softkeys button.reset{color:var(--danger); border-color:#4a2a22;}
+  .gauges{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px;}
+  .gauge .gk{display:flex;justify-content:space-between;font-size:11.5px;color:var(--text-dim);margin-bottom:4px;}
+  .gauge .gk b{font-family:var(--f-mono);font-weight:700;color:var(--text);}
+  .bar{height:8px;background:var(--panel-2);border-radius:4px;overflow:hidden;border:1px solid var(--border-soft);}
+  .bar i{display:block;height:100%;background:var(--ok);width:0;}
+  .bar i.warn{background:var(--accent);} .bar i.danger{background:var(--danger);}
 
-  .home-instructions{
-    display:none;
-    margin-top:10px;
-    background:var(--panel-2);
-    border:1px solid var(--border);
-    border-radius:var(--radius);
-    padding:12px 14px;
-    font-size:13px;
-    line-height:1.6;
-    color:var(--text);
-  }
-  .home-instructions.show{display:block;}
-  .home-instructions p{margin:0 0 6px;}
-  .home-instructions p:last-child{margin-bottom:0;}
+  table.details{width:100%;border-collapse:collapse;font-size:12.5px;}
+  table.details td{padding:5px 0;border-bottom:1px solid var(--border-soft);}
+  table.details td:last-child{text-align:right;font-family:var(--f-mono);color:var(--text);}
+  table.details td:first-child{color:var(--text-dim);}
 
-  .torque-badge{
-    font-family:'Oswald',sans-serif;
-    font-size:11.5px;
-    font-weight:600;
-    letter-spacing:0.05em;
-    text-transform:uppercase;
-    padding:4px 10px;
-    border-radius:999px;
-  }
-  .torque-badge.full{background:var(--accent-dim); color:var(--accent);}
-  .torque-badge.reduced{background:#33302a; color:var(--text-dim);}
+  .warns{display:flex;flex-direction:column;gap:6px;}
+  .warns p{margin:0;padding:8px 10px;border-radius:4px;font-size:12.5px;line-height:1.45;}
+  .warns .info{background:#1d2226;border:1px solid #2f383f;color:#b9c4cc;}
+  .warns .warn{background:#2e1f16;border:1px solid #4a2a13;color:var(--warn);}
+  .warns .danger{background:#2e1512;border:1px solid #5a2219;color:#ff8c75;}
 
-  .clamp-warning{
-    display:none;
-    margin-top:10px;
-    background:#2e1f16;
-    border:1px solid #4a2a13;
-    border-radius:var(--radius);
-    padding:10px 12px;
-    font-size:12.5px;
-    line-height:1.5;
-    color:#f0b27a;
-  }
-  .clamp-warning.show{display:block;}
-  .clamp-warning p{margin:0 0 6px;}
-  .clamp-warning p:last-child{margin-bottom:0;}
+  svg text{font-family:var(--f-mono);font-size:10px;fill:var(--text-dim);}
 
-  .note{
-    font-size:11.5px;
-    line-height:1.5;
-    color:var(--text-dim);
-    margin:16px 0 0;
-    padding:0 2px;
+  /* ---------- tables (chart, tools, materials) ---------- */
+  .toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
+  .toolbar .summary{flex:1;color:var(--text-dim);font-size:12.5px;}
+  .toolbar .summary b{color:var(--text);}
+  table.grid{width:100%;border-collapse:collapse;font-size:12.5px;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);}
+  table.grid th{
+    font-family:var(--f-head);font-stretch:semi-condensed;font-weight:600;font-size:11.5px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--accent);text-align:right;padding:8px 10px;border-bottom:1px solid var(--border);
+    background:#1a1c1e;position:sticky;top:57px;
+  }
+  table.grid th:first-child, table.grid td:first-child{text-align:left;}
+  table.grid td{padding:6px 10px;border-bottom:1px solid var(--border-soft);text-align:right;font-family:var(--f-mono);}
+  table.grid td.txt{font-family:var(--f-body);text-align:left;color:var(--text-dim);font-size:12px;}
+  table.grid tr.group td{background:#191b1c;color:var(--accent);font-family:var(--f-head);font-stretch:semi-condensed;letter-spacing:.1em;text-transform:uppercase;font-size:11.5px;font-weight:600;}
+  table.grid tr.current td{background:#22201a;}
+  table.grid tr:hover td{background:#25282a;}
+  td.warn{color:var(--accent);} td.danger{color:var(--danger);} td.dim{color:var(--text-dim);}
+  .tag{font-family:var(--f-body);font-size:10.5px;padding:1px 6px;border-radius:999px;background:var(--panel-2);color:var(--text-dim);margin-left:6px;}
+
+  .two{display:grid;grid-template-columns:420px 1fr;gap:16px;align-items:start;}
+  @media (max-width:980px){.two{grid-template-columns:1fr;}}
+  .muted{color:var(--text-dim);font-size:12px;line-height:1.5;}
+  .footnote{color:var(--text-dim);font-size:11.5px;line-height:1.5;margin-top:14px;max-width:900px;}
+
+  @media print{
+    body{background:#fff;color:#000;}
+    .topbar,.toolbar .btn,.toolbar select,.toolbar .seg{display:none;}
+    .tab{display:none !important;} #tab-chart{display:block !important;}
+    table.grid,table.grid th,table.grid td{background:#fff !important;color:#000 !important;border-color:#bbb;}
+    table.grid th{position:static;}
   }
 </style>
 </head>
 <body>
 
-<header>
-  <div class="plate">
+<header class="topbar">
+  <div class="brand">
     <h1>Speeds &amp; Feeds</h1>
-    <span id="matBadge">ALU</span>
+    <span id="machineName"></span>
   </div>
-  <p class="subtitle">Shop-floor RPM &amp; feed rate calculator</p>
+  <nav class="tabs" id="tabs">
+    <button data-tab="calc">Calculator</button>
+    <button data-tab="chart">Chart</button>
+    <button data-tab="tools">Tool library</button>
+    <button data-tab="machine">Machine</button>
+    <button data-tab="materials">Materials</button>
+  </nav>
+  <div class="seg" id="unitSeg">
+    <button data-u="in">Inch</button>
+    <button data-u="mm">Metric</button>
+  </div>
 </header>
 
-<div class="wrap">
+<main>
 
-  <div class="section">
-    <div class="section-label">Units</div>
-    <div class="unit-toggle">
-      <button id="btnIn" class="active">Inch</button>
-      <button id="btnMm">Metric</button>
+<!-- ======================= CALCULATOR ======================= -->
+<section class="tab" id="tab-calc">
+  <div class="calc-grid">
+
+    <div class="col">
+      <div class="panel">
+        <div class="label">Material</div>
+        <select class="wide" data-k="mat" id="matSel"></select>
+        <div class="mat-info" id="matInfo"></div>
+      </div>
+
+      <div class="panel">
+        <div class="label">Tool <span class="sub" id="toolState"></span></div>
+        <select class="wide" id="toolSel"></select>
+        <div style="margin-top:6px;">
+          <div class="field">
+            <label>Type</label>
+            <select data-k="tool.type" id="typeSel">
+              <option value="flat">Flat end mill / router bit</option>
+              <option value="ball">Ball nose</option>
+              <option value="bull">Bull nose (corner radius)</option>
+              <option value="vbit">V-bit / chamfer</option>
+              <option value="drill">Drill</option>
+            </select>
+          </div>
+          <div class="field"><label>Diameter</label><input type="number" step="any" data-k="tool.d" data-dim="len"><span class="u" data-unit="len"></span></div>
+          <div class="field"><label>Flutes</label><input type="number" step="1" min="1" max="12" data-k="tool.z" data-dim="int"><span class="u"></span></div>
+          <div class="field"><label>Flute length<span class="hint">cutting length / max DOC</span></label><input type="number" step="any" data-k="tool.fl" data-dim="len"><span class="u" data-unit="len"></span></div>
+          <div class="field"><label>Stickout<span class="hint">collet face to tip</span></label><input type="number" step="any" data-k="tool.so" data-dim="len"><span class="u" data-unit="len"></span></div>
+          <div class="field"><label>Shank diameter</label><input type="number" step="any" data-k="tool.shank" data-dim="len"><span class="u" data-unit="len"></span></div>
+          <div class="field" data-show="bull"><label>Corner radius</label><input type="number" step="any" data-k="tool.cr" data-dim="len"><span class="u" data-unit="len"></span></div>
+          <div class="field" data-show="vbit"><label>V angle<span class="hint">included angle</span></label><input type="number" step="1" data-k="tool.va" data-dim="deg"><span class="u">°</span></div>
+          <div class="field">
+            <label>Tool material</label>
+            <select data-k="tool.mat">
+              <option value="carbide">Solid carbide</option>
+              <option value="hss">HSS</option>
+              <option value="cobalt">Cobalt HSS</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Coating</label>
+            <select data-k="tool.coat">
+              <option value="none">Uncoated</option>
+              <option value="zrn">ZrN / TiB2 (non-ferrous)</option>
+              <option value="tialn">TiAlN / AlTiN (ferrous)</option>
+              <option value="dia">Diamond / DLC</option>
+            </select>
+          </div>
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <input type="text" id="saveName" placeholder="Name to save as…" style="flex:1;background:var(--panel-2);border:1px solid var(--border);border-radius:4px;padding:6px 8px;min-width:0;">
+          <button class="btn" id="saveToolBtn">Save tool</button>
+        </div>
+      </div>
     </div>
-  </div>
 
-  <div class="section">
-    <div class="section-label">Material</div>
-    <div class="chips" id="chips"></div>
-  </div>
+    <div class="col">
+      <div class="panel">
+        <div class="label">Operation</div>
+        <select class="wide" data-k="op" id="opSel"></select>
+        <div class="muted" id="opHint" style="margin-top:8px;"></div>
+      </div>
 
-  <div class="section">
-    <div class="section-label">Tool</div>
-    <div class="card">
-      <div class="field">
-        <div>
-          <label for="dia">Cutter diameter</label>
+      <div class="panel">
+        <div class="label">Strategy</div>
+        <div class="field" style="display:block;">
+          <div class="row" style="justify-content:space-between;"><label>Aggressiveness</label><span class="agg-val" id="aggVal"></span></div>
+          <input type="range" min="0" max="100" step="5" data-k="agg" data-dim="int">
+          <div class="agg-labels"><span>Tool life · finish</span><span>Max removal</span></div>
         </div>
-        <input type="number" id="dia" step="0.001" value="0.25">
-        <span class="unit-suffix" id="diaUnit">in</span>
-      </div>
-      <div class="field">
-        <label>Flutes</label>
-        <div class="stepper">
-          <button id="fluteDown">–</button>
-          <span id="fluteVal">2</span>
-          <button id="fluteUp">+</button>
-        </div>
-      </div>
-      <div class="field" style="flex-direction:column; align-items:stretch; gap:8px;">
-        <label>Bit style</label>
-        <div class="unit-toggle">
-          <button id="btnSquare" class="active">Square end mill</button>
-          <button id="btnRound">Round-over bit</button>
-        </div>
-        <span class="hint" id="bitHint">Constant cutting diameter through the full pass.</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-label">Cutting data</div>
-    <div class="card">
-      <div class="field">
-        <div>
-          <label for="sfm">Cutting speed</label>
-          <span class="hint" id="sfmHint">SFM</span>
-        </div>
-        <input type="number" id="sfm" step="1" value="500">
-        <span class="unit-suffix" id="sfmUnit">sfm</span>
-      </div>
-      <div class="field">
-        <div>
-          <label for="chip">Chip load / tooth</label>
-          <span class="hint">per flute, per revolution</span>
-        </div>
-        <input type="number" id="chip" step="0.0001" value="0.003">
-        <span class="unit-suffix" id="chipUnit">in</span>
-      </div>
-      <div class="toggle-row">
-        <span>Calculate MRR</span>
-        <div class="switch" id="mrrSwitch"></div>
-      </div>
-      <div class="mrr-fields" id="mrrFields">
         <div class="field">
-          <label for="doc">Depth of cut</label>
-          <input type="number" id="doc" step="0.001" value="0.1">
-          <span class="unit-suffix" id="docUnit">in</span>
+          <label>Coolant</label>
+          <select data-k="coolant">
+            <option value="dry">Dry</option>
+            <option value="air">Air blast</option>
+            <option value="mist">Mist / lubricant</option>
+            <option value="flood">Flood</option>
+          </select>
         </div>
         <div class="field">
-          <label for="woc">Width of cut</label>
-          <input type="number" id="woc" step="0.001" value="0.25">
-          <span class="unit-suffix" id="wocUnit">in</span>
+          <label>Fit to machine<span class="hint">auto-reduce depth if power, deflection or breakage limits are exceeded</span></label>
+          <input type="checkbox" data-k="limit">
         </div>
       </div>
-    </div>
-  </div>
 
-  <div class="section">
-    <div class="section-label">Spindle</div>
-    <div class="card">
-      <div class="field">
-        <div>
-          <label>Machine</label>
-          <span class="hint">Sienci ATC 2.2kW · AltMill Mk2 4x4</span>
+      <div class="panel">
+        <div class="label">Engagement <span class="sub">blank = recommended</span></div>
+        <div class="field"><label id="docLabel">Depth of cut (DOC)</label><input type="number" step="any" data-k="docOv" data-dim="len" data-null="1" id="docIn"><span class="u" data-unit="len"></span></div>
+        <div class="field" id="wocRow"><label id="wocLabel">Width of cut (WOC)</label><input type="number" step="any" data-k="wocOv" data-dim="len" data-null="1" id="wocIn"><span class="u" data-unit="len"></span></div>
+        <div class="field" data-show-op="finish3d"><label>Target scallop<span class="hint">cusp height between passes</span></label><input type="number" step="any" data-k="scallop" data-dim="small"><span class="u" data-unit="small"></span></div>
+        <div class="field"><label>Cut length<span class="hint">optional, for cut time</span></label><input type="number" step="any" data-k="cutLen" data-dim="len"><span class="u" data-unit="len"></span></div>
+        <div class="row" style="margin-top:8px;"><button class="btn small" id="clearOvBtn">Use recommended DOC / WOC</button></div>
+      </div>
+    </div>
+
+    <div class="col readout-col">
+      <div class="screen">
+        <div class="tiles" id="tiles"></div>
+        <div class="gcode">
+          <code id="gcode"></code>
+          <button class="btn small" id="copyBtn">Copy</button>
         </div>
       </div>
-      <div class="field">
-        <label for="rpmMin">Min RPM</label>
-        <input type="number" id="rpmMin" step="100" value="7500">
+      <div class="panel">
+        <div class="gauges" id="gauges"></div>
       </div>
-      <div class="field">
-        <label for="rpmMax">Max RPM</label>
-        <input type="number" id="rpmMax" step="100" value="24000">
+      <div class="warns" id="warns"></div>
+      <div class="panel">
+        <div class="label">Details</div>
+        <table class="details" id="details"></table>
       </div>
-      <div class="field">
-        <div>
-          <label for="rpmFullTorque">Full torque from</label>
-          <span class="hint">constant torque band starts here</span>
-        </div>
-        <input type="number" id="rpmFullTorque" step="100" value="18000">
+      <div class="panel">
+        <div class="label">Spindle power curve <span class="sub">available vs. required at this RPM</span></div>
+        <div id="powerCurve"></div>
       </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ======================= CHART ======================= -->
+<section class="tab" id="tab-chart">
+  <div class="toolbar">
+    <div class="seg" id="chartSeg">
+      <button data-v="dia">By diameter</button>
+      <button data-v="mat">By material</button>
+    </div>
+    <div class="summary" id="chartSummary"></div>
+    <button class="btn" onclick="window.print()">Print</button>
+  </div>
+  <table class="grid" id="chartTable"></table>
+  <p class="footnote" id="chartNote"></p>
+</section>
+
+<!-- ======================= TOOLS ======================= -->
+<section class="tab" id="tab-tools">
+  <div class="toolbar">
+    <div class="summary">Click <b>Use</b> to load a tool into the calculator. To add your own, set it up on the Calculator tab and click <b>Save tool</b>. Your tools are saved on this PC. Use <b>Export</b> / <b>Import</b> to move them to another computer.</div>
+    <button class="btn" id="exportBtn">Export</button>
+    <button class="btn" id="importBtn">Import</button>
+    <input type="file" id="importFile" accept=".json,application/json" style="display:none;">
+  </div>
+  <table class="grid" id="toolTable"></table>
+</section>
+
+<!-- ======================= MACHINE ======================= -->
+<section class="tab" id="tab-machine">
+  <div class="two">
+    <div class="panel">
+      <div class="label">Machine profile</div>
+      <div class="field"><label>Name</label><input type="text" data-k="machine.name"></div>
+      <div class="field"><label>Min RPM</label><input type="number" step="100" data-k="machine.rpmMin" data-dim="rpm"><span class="u">rpm</span></div>
+      <div class="field"><label>Max RPM</label><input type="number" step="100" data-k="machine.rpmMax" data-dim="rpm"><span class="u">rpm</span></div>
+      <div class="field"><label>Full power from<span class="hint">below this, power falls with RPM (constant torque)</span></label><input type="number" step="100" data-k="machine.rpmRated" data-dim="rpm"><span class="u">rpm</span></div>
+      <div class="field"><label>Spindle power</label><input type="number" step="0.1" data-k="machine.kW" data-dim="num"><span class="u">kW</span></div>
+      <div class="field"><label>Max feed X/Y</label><input type="number" step="any" data-k="machine.feedXY" data-dim="feed"><span class="u" data-unit="feed"></span></div>
+      <div class="field"><label>Max feed Z</label><input type="number" step="any" data-k="machine.feedZ" data-dim="feed"><span class="u" data-unit="feed"></span></div>
+      <div class="field"><label>Rigidity<span class="hint">1.0 = rigid VMC · 0.7 = solid router · 0.4 = light hobby router</span></label><input type="number" step="0.05" min="0.2" max="1" data-k="machine.rigidity" data-dim="num"><span class="u"></span></div>
+      <div class="row" style="margin-top:10px;"><button class="btn danger" id="resetMachineBtn">Reset to AltMill defaults</button></div>
+    </div>
+    <div class="panel">
+      <div class="label">Power curve</div>
+      <div id="powerCurveBig"></div>
+      <p class="muted">Rigidity scales the recommended depth and width of cut, and part of the chip load. Lower it if you hear chatter or see a poor finish at the recommended numbers. Raise it if the machine handles them easily.</p>
     </div>
   </div>
+</section>
 
-  <div class="section">
-    <div class="section-label">Travel limits</div>
-    <div class="card">
-      <div class="field">
-        <div>
-          <label for="feedMax">Max feed rate (X/Y)</label>
-          <span class="hint">gantry rapid/cutting ceiling</span>
-        </div>
-        <input type="number" id="feedMax" step="1" value="590">
-        <span class="unit-suffix" id="feedMaxUnit">ipm</span>
-      </div>
-    </div>
-  </div>
+<!-- ======================= MATERIALS ======================= -->
+<section class="tab" id="tab-materials">
+  <div class="toolbar"><div class="summary">The material database behind every calculation. Values are for solid carbide. HSS and cobalt are derated automatically. Chip loads are per tooth at each diameter, and other sizes are interpolated. Unit power is the energy needed to remove one unit of material.</div></div>
+  <table class="grid" id="matTable"></table>
+</section>
 
-  <div class="section">
-    <div class="section-label">Readout</div>
-    <div class="screen">
-      <div class="screen-row">
-        <span class="screen-key">S — spindle</span>
-        <span class="screen-val" id="outRpm">0<small>rpm</small></span>
-      </div>
-      <div class="screen-row">
-        <span class="screen-key">F — feed rate</span>
-        <span class="screen-val" id="outFeed">0<small>ipm</small></span>
-      </div>
-      <div class="screen-row" id="mrrRow" style="display:none;">
-        <span class="screen-key">MRR</span>
-        <span class="screen-val" id="outMrr">0<small>in³/min</small></span>
-      </div>
-      <div class="screen-row" id="torqueRow">
-        <span class="screen-key">Torque band</span>
-        <span class="torque-badge" id="torqueBadge">—</span>
-      </div>
-    </div>
-    <div class="clamp-warning" id="clampWarning"></div>
-    <div class="softkeys">
-      <button class="reset" id="resetBtn">Reset</button>
-      <button id="addHomeBtn">Add to home</button>
-    </div>
-    <div class="home-instructions" id="homeInstructions">
-      <p>1. Tap the <strong>Share</strong> icon in Safari's toolbar (square with an arrow up).</p>
-      <p>2. Scroll down and tap <strong>Add to Home Screen</strong>.</p>
-      <p>3. Tap <strong>Add</strong> in the top right.</p>
-      <p style="margin-top:8px; color:var(--text-dim);">This only works in Safari — Chrome and other browsers on iOS don't expose this option.</p>
-    </div>
-  </div>
-
-  <p class="note">
-    Material presets are typical carbide end-mill starting points for a 1/4"–3/8" tool. Scale chip load up for larger cutters and down for smaller or less rigid setups. Round-over and other profile bits engage the material at a changing depth through the cut, so treat that mode's numbers as a cautious starting point and dial feed down further on figured or veneered faces. Plywood's glue lines are abrasive and prone to splintering on the exit face — a sharp bit and a sacrificial backer help more than any speed adjustment. Always verify against your tool manufacturer's data.
-  </p>
-
-</div>
+</main>
 
 <script>
 (function(){
-  const materials = [
-    { key:'alu',   label:'Aluminum',  sfm:500, chip:0.0030 },
-    { key:'brass', label:'Brass',     sfm:400, chip:0.0030 },
-    { key:'mild',  label:'Mild steel',sfm:200, chip:0.0020 },
-    { key:'ss',    label:'Stainless', sfm:150, chip:0.0015 },
-    { key:'ci',    label:'Cast iron', sfm:250, chip:0.0030 },
-    { key:'ti',    label:'Titanium',  sfm:100, chip:0.0010 },
-    { key:'wood',  label:'Wood/MDF',  sfm:3000,chip:0.0080 },
-    { key:'ply',   label:'Plywood',   sfm:3000,chip:0.0090 },
-    { key:'plas',  label:'Plastic',   sfm:600, chip:0.0040 },
-  ];
+'use strict';
 
-  let unit = 'in';
-  let activeMat = 'alu';
-  let flutes = 2;
-  let mrrOn = false;
-  let bitStyle = 'square';
+/* =====================================================================
+   DATA
+   All internal values are INCHES / IPM / SFM. Units are converted only
+   for display and input (see DIM).
+   ===================================================================== */
 
-  const $ = id => document.getElementById(id);
-  const chipsEl = $('chips');
+// cls → engagement defaults as multiples of tool diameter (before aggressiveness & rigidity)
+const CLASS = {
+  wood:       {slot:1.0,  prof:1.5, profW:0.50, ad:2.0, adW:0.30, pockW:0.45, ramp:10, plunge:0.50, peck:3.0},
+  plastic:    {slot:0.75, prof:1.5, profW:0.40, ad:2.0, adW:0.25, pockW:0.40, ramp:5,  plunge:0.40, peck:2.0},
+  composite:  {slot:0.5,  prof:1.0, profW:0.25, ad:1.5, adW:0.15, pockW:0.30, ramp:3,  plunge:0.30, peck:1.5},
+  nonferrous: {slot:0.3,  prof:1.0, profW:0.15, ad:2.0, adW:0.10, pockW:0.30, ramp:2,  plunge:0.30, peck:1.0},
+  ferrous:    {slot:0.1,  prof:0.5, profW:0.08, ad:1.5, adW:0.07, pockW:0.20, ramp:1.5,plunge:0.20, peck:0.5},
+  hard:       {slot:0.05, prof:0.3, profW:0.05, ad:1.0, adW:0.05, pockW:0.15, ramp:1,  plunge:0.15, peck:0.3},
+};
 
-  materials.forEach(m=>{
-    const b = document.createElement('button');
-    b.className = 'chip' + (m.key===activeMat ? ' active':'');
-    b.textContent = m.label;
-    b.dataset.key = m.key;
-    b.addEventListener('click', ()=>selectMaterial(m.key));
-    chipsEl.appendChild(b);
-  });
+// [key, name, group, class, sfmLo, sfmHi, chip load @ 1/8 1/4 3/8 1/2", unit power hp/(in³/min), note]
+const MATERIALS = [
+  ['softwood','Softwood (pine, cedar, fir)','Wood','wood',1200,2500,[.004,.008,.012,.015],.020,'Tears out on cross grain. Use a downcut or compression bit for clean top edges.'],
+  ['hardwood','Hardwood (oak, maple, walnut)','Wood','wood',1000,2200,[.003,.007,.010,.013],.035,'Keep the chip load up. Feeding too slowly burns hardwoods, especially cherry and maple.'],
+  ['exotic','Dense exotic (ipe, purpleheart)','Wood','wood',800,1800,[.002,.005,.008,.010],.050,'Very dense and oily. Use sharp tools and lighter cuts, and watch for heat.'],
+  ['mdf','MDF','Wood','wood',1200,2500,[.004,.009,.013,.016],.030,'Abrasive, so use carbide only. Produces very fine dust: run dust collection.'],
+  ['ply','Plywood (birch / Baltic)','Wood','wood',1100,2400,[.004,.008,.012,.015],.030,'Glue lines dull tools fast. A compression bit gives clean faces on both sides. Cut into a sacrificial spoilboard.'],
+  ['particle','Particleboard / melamine','Wood','wood',1200,2500,[.004,.009,.013,.017],.030,'Melamine chips on the face. Use a compression or downcut bit, and cut full depth in one pass where possible.'],
+  ['hdf','HDF / hardboard','Wood','wood',1000,2200,[.003,.007,.011,.014],.035,''],
+  ['acrylic','Acrylic (cast)','Plastic','plastic',700,1200,[.003,.006,.009,.011],.050,'Use a single-flute O-flute bit and an air blast to clear chips. Feeding too slowly melts the chips and they weld back on.'],
+  ['acrylicx','Acrylic (extruded)','Plastic','plastic',600,1000,[.003,.005,.008,.010],.050,'Melts at a lower temperature than cast acrylic. Keep the feed up and clear chips aggressively.'],
+  ['pc','Polycarbonate','Plastic','plastic',800,1400,[.003,.007,.010,.013],.060,'Tough and gummy. Use sharp tools and good chip clearing.'],
+  ['hdpe','HDPE','Plastic','plastic',800,1500,[.004,.009,.012,.015],.030,'Gummy. Use a sharp 1–2 flute upcut bit and a high feed to avoid melting.'],
+  ['uhmw','UHMW-PE','Plastic','plastic',800,1500,[.004,.009,.012,.015],.030,'Stringy chips. Use a sharp single-flute bit and hold it down well, because it flexes.'],
+  ['acetal','Acetal / Delrin','Plastic','plastic',800,1400,[.004,.008,.011,.014],.050,'Machines cleanly and holds tight tolerances. A two-flute upcut works well.'],
+  ['nylon','Nylon','Plastic','plastic',700,1200,[.003,.007,.010,.012],.050,'Absorbs moisture and moves after machining. Leave a finish pass.'],
+  ['pvc','PVC (rigid)','Plastic','plastic',600,1100,[.003,.007,.010,.012],.050,'Gives off harmful fumes when overheated. Keep the chips moving.'],
+  ['abs','ABS','Plastic','plastic',700,1200,[.003,.007,.010,.012],.045,''],
+  ['hdu','HDU foam / tooling board','Plastic','plastic',1200,2500,[.005,.012,.016,.020],.008,'Cutting loads are very light. Feed is usually limited by the machine, not the tool.'],
+  ['g10','G10 / FR4','Composite','composite',350,600,[.001,.002,.003,.004],.100,'Glass fiber is extremely abrasive. Use diamond-coated or compression bits. The dust is hazardous: collect it and wear a respirator.'],
+  ['cf','Carbon fiber','Composite','composite',400,700,[.0012,.0025,.0035,.0045],.100,'Use diamond-coated bits. The dust is electrically conductive, so collect it at the source.'],
+  ['phenolic','Phenolic (linen / canvas)','Composite','composite',500,900,[.002,.004,.006,.008],.080,''],
+  ['al6061','Aluminum 6061-T6','Non-ferrous','nonferrous',600,1000,[.0008,.0018,.0028,.0038],.30,'Use mist, alcohol or WD-40 to keep chips from welding to the flutes. A 1–3 flute tool with polished flutes, ZrN-coated or uncoated, works best.'],
+  ['al7075','Aluminum 7075-T6','Non-ferrous','nonferrous',550,900,[.0008,.0018,.0028,.0038],.33,'Harder than 6061 and gives a nicer finish. Same tooling.'],
+  ['alcast','Aluminum, cast (A356)','Non-ferrous','nonferrous',500,800,[.0007,.0016,.0025,.0034],.30,'Silicon content makes it abrasive. Coated tools last longer.'],
+  ['al5052','Aluminum 5052 / 3003 (soft)','Non-ferrous','nonferrous',500,900,[.0007,.0016,.0024,.0032],.28,'Gummy. Use sharp tools and plenty of lubricant, and never let the tool rub.'],
+  ['brass','Brass 360','Non-ferrous','nonferrous',400,700,[.0008,.0018,.0027,.0036],.60,'Free-machining. Zero- or neutral-rake tools avoid grabbing.'],
+  ['bronze','Bronze','Non-ferrous','nonferrous',300,550,[.0006,.0014,.0021,.0028],.80,''],
+  ['copper','Copper (C110)','Non-ferrous','nonferrous',300,550,[.0005,.0012,.0018,.0024],.90,'Gummy. Use sharp, high-rake tools and lubricant.'],
+  ['steel1018','Mild steel 1018','Ferrous','ferrous',300,450,[.0005,.0012,.0018,.0024],1.10,'On a router, use light radial engagement (adaptive toolpaths) to keep cutting forces within what the frame can take.'],
+  ['steel4140','Alloy steel 4140 (annealed)','Ferrous','ferrous',250,380,[.0004,.0010,.0015,.0020],1.40,''],
+  ['toolsteel','Tool steel (O1 / A2 / D2, annealed)','Ferrous','ferrous',180,300,[.0003,.0008,.0012,.0016],1.60,''],
+  ['ss304','Stainless 304','Ferrous','ferrous',200,350,[.0004,.0009,.0013,.0018],1.40,'Work-hardens. Never let the tool dwell or rub, and keep the chip load up.'],
+  ['ss316','Stainless 316','Ferrous','ferrous',180,320,[.0004,.0009,.0013,.0017],1.50,'Work-hardens, and is gummier than 304.'],
+  ['castiron','Cast iron (gray)','Ferrous','ferrous',250,450,[.0006,.0014,.0020,.0026],0.90,'Cut dry with an air blast. The graphite dust is messy and abrasive.'],
+  ['ti','Titanium 6Al-4V','Exotic metals','hard',120,220,[.0003,.0008,.0012,.0016],1.25,'Use a low SFM and a constant chip load. Heat stays in the tool, so flood coolant is ideal. Not a good fit for a router.'],
+  ['inconel','Inconel 718','Exotic metals','hard',60,120,[.0002,.0006,.0009,.0012],2.00,'Well outside what a router is built for. Shown for reference only.'],
+].map(r=>({key:r[0],name:r[1],group:r[2],cls:r[3],sfm:[r[4],r[5]],cl:r[6],kp:r[7],note:r[8]}));
+const MAT = Object.fromEntries(MATERIALS.map(m=>[m.key,m]));
 
-  function selectMaterial(key){
-    activeMat = key;
-    [...chipsEl.children].forEach(c=> c.classList.toggle('active', c.dataset.key===key));
-    const m = materials.find(x=>x.key===key);
-    $('matBadge').textContent = m.label.toUpperCase().replace('/', ' / ');
-    const factor = bitStyle==='round' ? 0.6 : 1;
-    const sfmVal = m.sfm*factor;
-    const chipVal = m.chip*factor;
-    if(unit==='in'){
-      $('sfm').value = round(sfmVal,0);
-      $('chip').value = round(chipVal,4);
-    } else {
-      $('sfm').value = round(sfmVal*0.3048,0);
-      $('chip').value = round(chipVal*25.4,3);
-    }
-    calc();
+const TOOLMAT = {
+  carbide:{label:'Carbide', sfm:1.00, cl:1.00, E:88e6, allow:150e3},
+  hss:    {label:'HSS',     sfm:0.40, cl:0.80, E:30e6, allow:90e3},
+  cobalt: {label:'Cobalt',  sfm:0.50, cl:0.85, E:31e6, allow:100e3},
+};
+const METAL = c=>c==='nonferrous'||c==='ferrous'||c==='hard';
+const COATING = {
+  none: ()=>1,
+  zrn:  c=>(c==='nonferrous'||c==='plastic')?1.10:1.00,
+  tialn:c=>(c==='ferrous'||c==='hard')?1.20:1.00,
+  dia:  c=>(c==='composite'||c==='wood'||c==='nonferrous')?1.15:1.00,
+};
+const COOLANT = {
+  dry:  c=>METAL(c)?0.85:1,
+  air:  ()=>1,
+  mist: c=>METAL(c)?1.10:1,
+  flood:c=>METAL(c)?1.20:1,
+};
+
+const OPS = {
+  slot:    {label:'Slot (100% width)',          hint:'Full-width cut. The hardest on the tool and chip clearing, so depth is kept conservative.'},
+  profile: {label:'Profile / contour',          hint:'Cutting along a wall at part width. Feed is raised to make up for chip thinning.'},
+  adaptive:{label:'Adaptive / HSM clearing',    hint:'Light stepover with deep cuts and constant engagement. Uses the full flute and gives the most removal for the least force.'},
+  pocket:  {label:'Pocket (conventional)',      hint:'Offset or zig-zag pocketing at moderate stepover.'},
+  finish:  {label:'Finish wall pass',           hint:'Light radial pass at full depth for a clean, accurate wall. Deflection is held tight.'},
+  surface: {label:'Surfacing / facing',         hint:'Shallow, wide passes to flatten a spoilboard or face stock. Use a large surfacing bit at roughly 40–60% stepover.'},
+  rough3d: {label:'3D roughing',                hint:'Layered roughing of sculpted surfaces with a ball or bull nose.'},
+  finish3d:{label:'3D finishing (stepover)',    hint:'Raster or scallop finishing. Stepover comes from the target scallop height, and RPM uses the effective cutting diameter.'},
+  vcarve:  {label:'V-carve / engrave',          hint:'Cutting width depends on depth. Speed is based on the effective diameter at that depth.'},
+  drill:   {label:'Drill / peck',               hint:'Plunge drilling. Feed is per revolution and capped at the Z-axis maximum.'},
+};
+const OPS_FOR = {
+  flat:['profile','adaptive','pocket','slot','finish','surface','rough3d'],
+  ball:['finish3d','rough3d','slot','profile'],
+  bull:['rough3d','finish3d','adaptive','pocket','profile','slot'],
+  vbit:['vcarve'],
+  drill:['drill'],
+};
+const TYPE_LABEL = {flat:'Flat',ball:'Ball',bull:'Bull',vbit:'V-bit',drill:'Drill'};
+
+const T = (id,name,type,d,z,fl,so,shank,extra)=>Object.assign({id,name,type,d,z,fl,so,shank,cr:0,va:90,mat:'carbide',coat:'none'},extra||{});
+const BUILTIN_TOOLS = [
+  T('b-up18','1/8" 2-flute upcut','flat',.125,2,.5,.75,.25),
+  T('b-up14','1/4" 2-flute upcut','flat',.25,2,.75,1.0,.25),
+  T('b-dn14','1/4" 2-flute downcut','flat',.25,2,.75,1.0,.25),
+  T('b-cp14','1/4" compression','flat',.25,2,.875,1.125,.25),
+  T('b-cp12','1/2" compression','flat',.5,2,1.125,1.5,.5),
+  T('b-o18','1/8" 1-flute O-flute (plastics)','flat',.125,1,.5,.75,.25),
+  T('b-o14','1/4" 1-flute O-flute (plastics)','flat',.25,1,.75,1.0,.25),
+  T('b-al14','1/4" 3-flute aluminum (ZrN)','flat',.25,3,.75,1.0,.25,{coat:'zrn'}),
+  T('b-al38','3/8" 3-flute aluminum (ZrN)','flat',.375,3,1.0,1.25,.375,{coat:'zrn'}),
+  T('b-6mm','6 mm 2-flute flat','flat',6/25.4,2,22/25.4,30/25.4,6/25.4),
+  T('b-surf','1" spoilboard surfacing bit','flat',1.0,3,.25,.75,.25),
+  T('b-bn116','1/16" ball nose 2-flute','ball',.0625,2,.25,.5,.125),
+  T('b-bn18','1/8" ball nose 2-flute','ball',.125,2,.5,.75,.25),
+  T('b-bn14','1/4" ball nose 2-flute','ball',.25,2,.75,1.25,.25),
+  T('b-bull14','1/4" bull nose 0.030" R','bull',.25,3,.75,1.0,.25,{cr:.03}),
+  T('b-v60','1/2" 60° V-bit','vbit',.5,2,.43,.75,.25,{va:60}),
+  T('b-v90','1/2" 90° V-bit','vbit',.5,2,.25,.75,.25,{va:90}),
+  T('b-dr14','1/4" carbide drill','drill',.25,2,1.0,1.5,.25),
+];
+
+const MACHINE_DEFAULT = {
+  name:'Sienci AltMill Mk2 4x4 · 2.2 kW ATC',
+  rpmMin:7500, rpmMax:24000, rpmRated:18000, kW:2.2,
+  feedXY:590, feedZ:236, rigidity:0.7,
+};
+
+/* =====================================================================
+   STATE
+   ===================================================================== */
+const STORE_KEY = 'altmill-sf-v2';
+const DEFAULT_STATE = {
+  units:'in', tab:'calc', chartView:'dia',
+  mat:'hardwood', op:'profile', agg:50, coolant:'air', limit:true,
+  docOv:null, wocOv:null, scallop:0.001, cutLen:0,
+  toolId:'b-up14', toolEdited:false,
+  tool:Object.assign({}, BUILTIN_TOOLS[1]),
+  machine:Object.assign({}, MACHINE_DEFAULT),
+  userTools:[],
+};
+let state = load();
+
+function load(){
+  let saved = null;
+  try{ saved = JSON.parse(localStorage.getItem(STORE_KEY)); }catch(e){}
+  const s = JSON.parse(JSON.stringify(DEFAULT_STATE));
+  if(saved && typeof saved==='object'){
+    Object.assign(s, saved);
+    s.machine = Object.assign({}, MACHINE_DEFAULT, saved.machine||{});
+    s.tool = Object.assign({}, DEFAULT_STATE.tool, saved.tool||{});
+    if(!MAT[s.mat]) s.mat = DEFAULT_STATE.mat;
+    if(!Array.isArray(s.userTools)) s.userTools = [];
   }
+  return s;
+}
+function save(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){}
+}
+function getPath(p){ return p.split('.').reduce((o,k)=>o==null?undefined:o[k], state); }
+function setPath(p,v){
+  const ks=p.split('.'); let o=state;
+  for(let i=0;i<ks.length-1;i++) o=o[ks[i]];
+  o[ks[ks.length-1]]=v;
+}
+const allTools = ()=>BUILTIN_TOOLS.concat(state.userTools);
 
-  function round(n,d){
-    const f = Math.pow(10,d);
-    return Math.round(n*f)/f;
+/* =====================================================================
+   UNITS
+   ===================================================================== */
+const DIM = {
+  len:   {in:{f:1,u:'in',d:4},        mm:{f:25.4,u:'mm',d:2}},
+  small: {in:{f:1,u:'in',d:4},        mm:{f:25.4,u:'mm',d:3}},
+  feed:  {in:{f:1,u:'ipm',d:1},       mm:{f:25.4,u:'mm/min',d:0}},
+  speed: {in:{f:1,u:'sfm',d:0},       mm:{f:0.3048,u:'m/min',d:0}},
+  mrr:   {in:{f:1,u:'in³/min',d:2},   mm:{f:16.387,u:'cm³/min',d:1}},
+  force: {in:{f:1,u:'lbf',d:1},       mm:{f:4.448,u:'N',d:0}},
+  torque:{in:{f:8.8507,u:'lbf·in',d:1},mm:{f:1,u:'N·m',d:2}},
+  rpm:   {in:{f:1,u:'rpm',d:0},       mm:{f:1,u:'rpm',d:0}},
+  int:   {in:{f:1,u:'',d:0},          mm:{f:1,u:'',d:0}},
+  num:   {in:{f:1,u:'',d:2},          mm:{f:1,u:'',d:2}},
+  deg:   {in:{f:1,u:'°',d:0},         mm:{f:1,u:'°',d:0}},
+};
+const du = dim=>DIM[dim][state.units];
+function fmt(v, dim, d){
+  if(v==null || !isFinite(v)) return '—';
+  const D=du(dim), dd = d==null ? D.d : d;
+  return (v*D.f).toLocaleString('en-US',{minimumFractionDigits:dd,maximumFractionDigits:dd});
+}
+const fmtU = (v,dim,d)=>fmt(v,dim,d)+' '+du(dim).u;
+const fracs = {0.03125:'1/32',0.0625:'1/16',0.09375:'3/32',0.125:'1/8',0.1875:'3/16',0.25:'1/4',0.3125:'5/16',0.375:'3/8',0.5:'1/2',0.625:'5/8',0.75:'3/4',1:'1'};
+function diaLabel(d){
+  if(state.units==='mm') return fmt(d,'len',d*25.4<3?1:0)+' mm';
+  const f = fracs[Math.round(d*1e5)/1e5];
+  return f ? f+'"' : fmt(d,'len',3)+'"';
+}
+
+/* =====================================================================
+   CALCULATION
+   ===================================================================== */
+function clInterp(cl, d){
+  const xs=[.125,.25,.375,.5];
+  if(d<=xs[0]) return cl[0]*d/xs[0];
+  if(d>=xs[3]) return cl[3]*Math.pow(d/xs[3],0.6);
+  for(let i=0;i<3;i++){
+    if(d<=xs[i+1]){ const t=(d-xs[i])/(xs[i+1]-xs[i]); return cl[i]+(cl[i+1]-cl[i])*t; }
   }
-
-  function setUnit(u){
-    if(u===unit) return;
-    const dia = parseFloat($('dia').value)||0;
-    const sfm = parseFloat($('sfm').value)||0;
-    const chip = parseFloat($('chip').value)||0;
-    const doc = parseFloat($('doc').value)||0;
-    const woc = parseFloat($('woc').value)||0;
-    const feedMax = parseFloat($('feedMax').value)||0;
-
-    if(u==='mm'){
-      $('dia').value = round(dia*25.4,2);
-      $('sfm').value = round(sfm*0.3048,0);
-      $('chip').value = round(chip*25.4,3);
-      $('doc').value = round(doc*25.4,2);
-      $('woc').value = round(woc*25.4,2);
-      $('feedMax').value = round(feedMax*25.4,0);
-      $('feedMaxUnit').textContent='mm/min';
-      $('diaUnit').textContent='mm';
-      $('sfmUnit').textContent='m/min';
-      $('sfmHint').textContent='Vc';
-      $('chipUnit').textContent='mm';
-      $('docUnit').textContent='mm';
-      $('wocUnit').textContent='mm';
-      $('btnMm').classList.add('active');
-      $('btnIn').classList.remove('active');
-    } else {
-      $('dia').value = round(dia/25.4,3);
-      $('sfm').value = round(sfm/0.3048,0);
-      $('chip').value = round(chip/25.4,4);
-      $('doc').value = round(doc/25.4,3);
-      $('woc').value = round(woc/25.4,3);
-      $('feedMax').value = round(feedMax/25.4,0);
-      $('feedMaxUnit').textContent='ipm';
-      $('diaUnit').textContent='in';
-      $('sfmUnit').textContent='sfm';
-      $('sfmHint').textContent='SFM';
-      $('chipUnit').textContent='in';
-      $('docUnit').textContent='in';
-      $('wocUnit').textContent='in';
-      $('btnIn').classList.add('active');
-      $('btnMm').classList.remove('active');
-    }
-    unit = u;
-    calc();
+  return cl[3];
+}
+function effDia(t, ap){
+  const D=t.d, R=D/2;
+  if(t.type==='ball') return ap>=R ? D : 2*Math.sqrt(Math.max(ap,0)*(D-ap));
+  if(t.type==='bull'){
+    const r=Math.min(t.cr||0,R);
+    if(ap>=r) return D;
+    return D-2*r+2*Math.sqrt(r*r-(r-ap)*(r-ap));
   }
+  if(t.type==='vbit') return Math.min(D, 2*ap*Math.tan((t.va||90)*Math.PI/360));
+  return D;
+}
+function validOp(type, op){
+  const ops = OPS_FOR[type]||OPS_FOR.flat;
+  return ops.includes(op) ? op : ops[0];
+}
+function noseRadius(t){ return t.type==='ball' ? t.d/2 : t.type==='bull' ? Math.min(t.cr||0,t.d/2) : 0; }
 
-  $('btnIn').addEventListener('click', ()=>setUnit('in'));
-  $('btnMm').addEventListener('click', ()=>setUnit('mm'));
+function compute(s, t, adj){
+  adj = adj || {docF:1, wocF:1};
+  const m=MAT[s.mat], c=CLASS[m.cls], M=s.machine, tm=TOOLMAT[t.mat]||TOOLMAT.carbide;
+  const a=s.agg/100, D=t.d, R=D/2, z=Math.max(1,Math.round(t.z||1));
+  const op = validOp(t.type, s.op);
+  const warn=[];
+  const scaleF = (0.7+0.6*a)*M.rigidity;
 
-  function setBitStyle(style){
-    bitStyle = style;
-    $('btnSquare').classList.toggle('active', style==='square');
-    $('btnRound').classList.toggle('active', style==='round');
-    $('bitHint').textContent = style==='round'
-      ? 'Cutting diameter varies through the profile — chip load defaults are pulled back to keep edge quality on the curve.'
-      : 'Constant cutting diameter through the full pass.';
-    selectMaterial(activeMat);
+  // --- recommended engagement ---
+  let doc, woc;
+  switch(op){
+    case 'slot':     doc=c.slot*D*scaleF; woc=D; break;
+    case 'profile':  doc=c.prof*D*scaleF; woc=c.profW*D*scaleF; break;
+    case 'adaptive': doc=c.ad*D*scaleF;   woc=c.adW*D*scaleF; break;
+    case 'pocket':   doc=c.slot*D*scaleF; woc=c.pockW*D*scaleF; break;
+    case 'finish':   doc=c.prof*D*1.5*M.rigidity; woc=Math.max(0.03*D,0.003); break;
+    case 'surface':  doc=Math.min(0.03*D*(METAL(m.cls)?0.5:1)+0.01, 0.04); woc=0.5*D*(0.8+0.4*a); break;
+    case 'rough3d':  doc=c.slot*D*0.6*scaleF; woc=0.4*D*scaleF; break;
+    case 'finish3d': doc=Math.min(0.1*D,0.02); woc=0; break;
+    case 'vcarve':   doc=Math.min(0.2*D,0.125); woc=0; break;
+    case 'drill':    doc=c.peck*D; woc=D; break;
   }
-  $('btnSquare').addEventListener('click', ()=>setBitStyle('square'));
-  $('btnRound').addEventListener('click', ()=>setBitStyle('round'));
+  let docMax = t.fl;
+  if(t.type==='vbit') docMax = Math.min(docMax, R/Math.tan((t.va||90)*Math.PI/360));
+  if(op!=='drill') doc = Math.min(doc, docMax);
+  doc *= adj.docF;
+  const docAuto = s.docOv==null;
+  if(!docAuto) doc = s.docOv;
+  doc = Math.max(doc, 0);
 
-  $('fluteUp').addEventListener('click', ()=>{ flutes=Math.min(flutes+1,12); $('fluteVal').textContent=flutes; calc(); });
-  $('fluteDown').addEventListener('click', ()=>{ flutes=Math.max(flutes-1,1); $('fluteVal').textContent=flutes; calc(); });
+  const De = Math.max(effDia(t, op==='drill'?D:doc), 0.001);
+  const Rn = noseRadius(t);
+  if(op==='finish3d'){
+    const h = Math.min(s.scallop, Rn*0.5);
+    woc = Rn>0 ? 2*Math.sqrt(2*Rn*h-h*h) : 0.1*D;
+  }
+  if(op==='vcarve' || op==='slot') woc = De;
+  if(op==='drill') woc = D;
+  const wocFixed = ['slot','vcarve','drill'].includes(op);
+  if(!wocFixed) woc *= adj.wocF;
+  const wocAuto = wocFixed || s.wocOv==null;
+  if(!wocAuto) woc = s.wocOv;
+  woc = Math.min(Math.max(woc,0), D);
 
-  $('mrrSwitch').addEventListener('click', ()=>{
-    mrrOn = !mrrOn;
-    $('mrrSwitch').classList.toggle('on', mrrOn);
-    $('mrrFields').classList.toggle('show', mrrOn);
-    $('mrrRow').style.display = mrrOn ? 'flex' : 'none';
-    calc();
-  });
+  // --- speed ---
+  let sfm = (m.sfm[0]+(m.sfm[1]-m.sfm[0])*a) * tm.sfm * COATING[t.coat||'none'](m.cls) * COOLANT[s.coolant](m.cls);
+  if(op==='drill') sfm *= 0.7;
+  const rpmRaw = sfm*12/(Math.PI*De);
+  const rpm = Math.min(Math.max(rpmRaw, M.rpmMin), M.rpmMax);
+  const sfmAct = rpm*Math.PI*De/12;
 
-  ['dia','sfm','chip','doc','woc','rpmMin','rpmMax','rpmFullTorque','feedMax'].forEach(id=>{
-    $(id).addEventListener('input', calc);
-  });
+  // --- chip load & thinning ---
+  const clBase = clInterp(m.cl, t.type==='vbit' ? De : D);
+  const opF = {slot:.85,profile:1,adaptive:1,pocket:.95,finish:.75,surface:.9,rough3d:.9,finish3d:.8,vcarve:.7,drill:1}[op];
+  const rigCl = 0.5+0.5*M.rigidity;
+  const fz = clBase*tm.cl*(0.8+0.4*a)*opF*rigCl;
+  let rctf=1, ballF=1;
+  if(!wocFixed && woc>0 && woc<De/2) rctf = De/(2*Math.sqrt(De*woc-woc*woc));
+  if((t.type==='ball'||t.type==='bull') && De<D*0.999) ballF = D/De;
+  const thin = Math.min(rctf*ballF, 4);
 
-  $('resetBtn').addEventListener('click', ()=>{
-    flutes = 2;
-    $('fluteVal').textContent = 2;
-    bitStyle = 'square';
-    $('btnSquare').classList.add('active');
-    $('btnRound').classList.remove('active');
-    $('bitHint').textContent = 'Constant cutting diameter through the full pass.';
-    mrrOn = false;
-    $('mrrSwitch').classList.remove('on');
-    $('mrrFields').classList.remove('show');
-    $('mrrRow').style.display = 'none';
-    $('dia').value = unit==='in' ? 0.25 : 6.35;
-    $('feedMax').value = unit==='in' ? 590 : 14986;
-    setUnit(unit);
-    selectMaterial('alu');
-  });
+  let feedRaw, fpr=0, feedLim;
+  if(op==='drill'){
+    fpr = 2*clBase*tm.cl*(0.8+0.4*a)*rigCl*0.9;
+    feedRaw = rpm*fpr; feedLim = M.feedZ;
+  } else {
+    feedRaw = rpm*z*fz*thin; feedLim = M.feedXY;
+  }
+  const feed = Math.min(feedRaw, feedLim);
+  const fzProg = op==='drill' ? fpr/2 : feed/(rpm*z);
+  const hex = op==='drill' ? fzProg : fzProg/thin;
 
-  $('addHomeBtn').addEventListener('click', ()=>{
-    $('homeInstructions').classList.toggle('show');
-  });
+  const plunge = op==='drill' ? feed : Math.min(feed*c.plunge, M.feedZ);
 
-  function calc(){
-    const dia = parseFloat($('dia').value)||0;
-    const sfm = parseFloat($('sfm').value)||0;
-    const chip = parseFloat($('chip').value)||0;
-    const rpmMin = parseFloat($('rpmMin').value)||0;
-    const rpmMax = parseFloat($('rpmMax').value)||Infinity;
-    const fullTorque = parseFloat($('rpmFullTorque').value)||Infinity;
-    const K = unit==='in' ? 12 : 1000;
+  // --- removal, power, force ---
+  let mrr;
+  if(op==='drill') mrr = Math.PI*D*D/4*feed;
+  else if(op==='vcarve') mrr = feed*doc*De/2;
+  else if(t.type==='ball' && (op==='rough3d'||op==='finish3d')) mrr = feed*doc*woc*0.8;
+  else mrr = feed*doc*woc;
+  const sizeF = Math.min(1.8, Math.max(0.8, Math.pow(m.cl[1]/Math.max(hex,1e-5), 0.2)));
+  const hpCut = mrr*m.kp*sizeF;
+  const kW = hpCut/0.85*0.7457;
+  const availKW = M.kW*Math.min(1, rpm/M.rpmRated);
+  const powerPct = kW/availKW*100;
+  const omega = 2*Math.PI*rpm/60;
+  const torque = kW*1000/omega, torqueAvail = availKW*1000/omega;
+  const Ft = hpCut*33000/Math.max(sfmAct,1);
 
-    let rawRpm = dia>0 ? (sfm*K)/(Math.PI*dia) : 0;
-    rawRpm = Math.max(rawRpm,0);
-    const rpm = Math.min(Math.max(rawRpm, rpmMin), rpmMax);
-    const rawFeed = rpm*flutes*chip;
-    const feedMax = parseFloat($('feedMax').value)||Infinity;
-    const feed = Math.min(rawFeed, feedMax);
+  // --- deflection & bending stress (stepped cantilever: fluted section + shank) ---
+  let defl=0, breakPct=0;
+  if(op!=='drill'){
+    const k = z<=1?0.70 : z===2?0.75 : z===3?0.80 : 0.85;
+    const Df=k*D, Ds=t.shank||D;
+    const If=Math.PI*Math.pow(Df,4)/64, Is=Math.PI*Math.pow(Ds,4)/64;
+    const L=Math.max(t.so,0.01), aL=Math.min(t.fl,L);
+    defl = Ft/(3*tm.E)*(Math.pow(aL,3)/If + (Math.pow(L,3)-Math.pow(aL,3))/Is);
+    const sig = Math.max(Ft*aL*(Df/2)/If, Ft*L*(Ds/2)/Is);
+    breakPct = sig/tm.allow*100;
+  }
+  const finishOp = ['finish','finish3d','vcarve'].includes(op);
+  const deflLim = finishOp ? 0.0005 : (METAL(m.cls) ? 0.0015 : 0.003);
 
-    $('outRpm').innerHTML = Math.round(rpm).toLocaleString() + '<small>rpm</small>';
-    $('outFeed').innerHTML = round(feed,1) + '<small>' + (unit==='in'?'ipm':'mm/min') + '</small>';
+  let scallop=null;
+  if(Rn>0 && (op==='finish3d'||op==='rough3d') && woc/2<Rn) scallop = Rn-Math.sqrt(Rn*Rn-woc*woc/4);
+  const time = s.cutLen>0 && feed>0 ? s.cutLen/feed : null;
 
-    const warnings = [];
-    if(dia>0 && Math.round(rawRpm)!==Math.round(rpm)){
-      const achievedSfm = (rpm*Math.PI*dia)/K;
-      const sfmLabel = unit==='in' ? 'sfm' : 'm/min';
-      if(rawRpm > rpmMax){
-        warnings.push('Calculated ' + Math.round(rawRpm).toLocaleString() + ' rpm exceeds max — capped at ' + Math.round(rpm).toLocaleString() + ' rpm, about ' + round(achievedSfm,0) + ' ' + sfmLabel + ' actual, slower than the ' + round(sfm,0) + ' set.');
-      } else {
-        warnings.push('Calculated ' + Math.round(rawRpm).toLocaleString() + ' rpm is below spindle minimum — running at ' + Math.round(rpm).toLocaleString() + ' rpm instead, about ' + round(achievedSfm,0) + ' ' + sfmLabel + ' actual, more aggressive than the ' + round(sfm,0) + ' set. Consider a larger diameter tool or a lighter cut.');
-      }
+  // --- warnings ---
+  const W=(lvl,msg)=>warn.push({lvl,msg});
+  if(rpmRaw > M.rpmMax*1.005){
+    if(op==='finish3d') W('info',`Near the ball tip the effective diameter is only ${fmtU(De,'len')}, so the ideal speed would be ${fmt(rpmRaw,'rpm')} rpm. Running at the ${fmt(M.rpmMax,'rpm')} rpm max is normal for finishing.`);
+    else W('info',`Target speed needs ${fmt(rpmRaw,'rpm')} rpm. Capped at the ${fmt(rpm,'rpm')} rpm max, which gives ${fmtU(sfmAct,'speed')} actual vs ${fmtU(sfm,'speed')} target. This is normal for small tools and wood.`);
+  }
+  if(rpmRaw < M.rpmMin*0.995 && !METAL(m.cls)){
+    W('info',`Target speed needs only ${fmt(rpmRaw,'rpm')} rpm, below the spindle minimum. Running at ${fmt(rpm,'rpm')} rpm gives ${fmtU(sfmAct,'speed')}. That is fine in non-metals as long as the chip load stays up.`);
+  } else if(rpmRaw < M.rpmMin*0.995){
+    W('warn',`Target speed needs only ${fmt(rpmRaw,'rpm')} rpm, below the spindle minimum. Running at ${fmt(rpm,'rpm')} rpm gives ${fmtU(sfmAct,'speed')}, faster than the ${fmtU(sfm,'speed')} target, so expect more heat and shorter tool life. A larger-diameter tool or a coated tool helps.`);
+  }
+  if(feedRaw > feedLim*1.005){
+    const axis = op==='drill'?'Z':'X/Y';
+    let msg = `Calculated feed of ${fmtU(feedRaw,'feed')} is over the ${axis} max. Capped at ${fmtU(feed,'feed')}, so the actual chip load is ${fmtU(hex,'small')}.`;
+    if(op!=='drill' && hex < fz*0.7){
+      const rpmFix = feedLim/(z*fz*thin);
+      if(rpmFix >= M.rpmMin) msg += ` Drop the spindle to about ${fmt(Math.round(rpmFix/100)*100,'rpm')} rpm to restore the chip load and avoid rubbing and burning.`;
+      else msg += ' Thin chips cause rubbing and heat. Use fewer flutes if possible.';
     }
-    if(Math.round(rawFeed) > Math.round(feedMax)){
-      warnings.push('Calculated feed of ' + round(rawFeed,1) + ' ' + (unit==='in'?'ipm':'mm/min') + ' is beyond the gantry\'s max travel speed — capped at ' + round(feedMax,1) + '. Chip load per tooth will be lower than set at this feed.');
-    }
-    const clampWarn = $('clampWarning');
-    if(warnings.length){
-      clampWarn.innerHTML = warnings.map(w=>'<p>'+w+'</p>').join('');
-      clampWarn.classList.add('show');
-    } else {
-      clampWarn.classList.remove('show');
-    }
+    W(hex < fz*0.7 ? 'warn':'info', msg);
+  }
+  if(op!=='drill' && doc > docMax*1.001) W('danger',`Depth of cut ${fmtU(doc,'len')} is deeper than the tool's cutting length (${fmtU(docMax,'len')}). The shank will rub.`);
+  if(t.so < t.fl*0.999 && op!=='drill') W('info','Stickout is shorter than the flute length, so part of the flutes is inside the collet. That is fine as long as the cut depth stays below the stickout.');
+  if(powerPct>100) W('danger',`Needs ${fmt(kW,'num')} kW, but the spindle only has ${fmt(availKW,'num')} kW at ${fmt(rpm,'rpm')} rpm. Expect stalling. Reduce depth or width of cut.`);
+  else if(powerPct>85) W('warn',`Using ${Math.round(powerPct)}% of the available spindle power. There is little margin for hard spots or a dull tool.`);
+  if(defl>deflLim*2) W('danger',`Tool deflection of about ${fmtU(defl,'small')} is more than twice the ${fmtU(deflLim,'small')} limit. Expect chatter, an out-of-tolerance wall, and possible breakage.`);
+  else if(defl>deflLim) W('warn',`Tool deflection of about ${fmtU(defl,'small')} is above the ${fmtU(deflLim,'small')} target for this operation. Shorten the stickout or lighten the cut.`);
+  if(breakPct>100) W('danger',`Bending stress is ${Math.round(breakPct)}% of the tool's safe limit. High risk of breakage.`);
+  else if(breakPct>60) W('warn',`Bending stress is ${Math.round(breakPct)}% of the tool's safe limit.`);
+  if(t.mat!=='carbide' && (m.cls==='wood'||m.cls==='composite')) W('info','HSS dulls quickly in wood products and composites. Carbide is strongly recommended.');
+  if(m.cls==='ferrous' || m.cls==='hard') W('info','Ferrous and exotic metals push a gantry router hard. Use adaptive toolpaths, short stickout, and a rigid fixture.');
+  if(op==='drill' && feedRaw>feedLim*1.005) {/* already covered */}
 
-    const badge = $('torqueBadge');
-    if(rpm >= fullTorque){
-      badge.textContent = 'Full torque';
-      badge.className = 'torque-badge full';
-    } else {
-      badge.textContent = 'Reduced torque';
-      badge.className = 'torque-badge reduced';
-    }
+  return {op,doc,woc,docAuto,wocAuto,docMax,De,D,z,sfm,sfmAct,rpmRaw,rpm,fz,fzProg,hex,rctf,ballF,thin,
+          feedRaw,feed,feedLim,fpr,plunge,ramp:c.ramp,mrr,kW,hp:kW/0.7457,availKW,powerPct,torque,torqueAvail,
+          Ft,defl,deflLim,breakPct,scallop,time,warn,m,t};
+}
 
-    if(mrrOn){
-      const doc = parseFloat($('doc').value)||0;
-      const woc = parseFloat($('woc').value)||0;
-      let mrr, mrrUnit;
-      if(unit==='in'){
-        mrr = feed*doc*woc;
-        mrrUnit = 'in³/min';
-      } else {
-        mrr = (feed*doc*woc)/1000;
-        mrrUnit = 'cm³/min';
-      }
-      $('outMrr').innerHTML = round(mrr,2) + '<small>' + mrrUnit + '</small>';
+// Wraps compute(): when "Fit to machine" is on, shrinks the recommended depth until
+// power, deflection and bending stress are inside limits (like a cut optimizer).
+function solve(s, t){
+  const adj={docF:1,wocF:1};
+  let r=compute(s,t,adj), limitedBy=null;
+  if(s.limit && r.op!=='drill'){
+    for(let i=0;i<10;i++){
+      const ratios = {'spindle power':r.powerPct/80, 'tool deflection':r.defl/r.deflLim, 'tool breakage':r.breakPct/60};
+      let by=null, need=1.001;
+      for(const k in ratios) if(ratios[k]>need){ need=ratios[k]; by=k; }
+      if(!by) break;
+      const f = Math.max(0.3, 0.97/need);
+      if(s.docOv==null && !['vcarve','finish3d'].includes(r.op) && adj.docF>0.05) adj.docF = Math.max(0.05, adj.docF*f);
+      else if(s.wocOv==null && !['slot','vcarve','drill','finish3d'].includes(r.op) && adj.wocF>0.05) adj.wocF = Math.max(0.05, adj.wocF*f);
+      else break;
+      limitedBy = by;
+      r = compute(s,t,adj);
     }
   }
+  r.limitedBy = limitedBy; r.adj = adj;
+  if(limitedBy){
+    const which = adj.docF<1 ? `depth of cut to ${Math.round(adj.docF*100)}%` : `width of cut to ${Math.round(adj.wocF*100)}%`;
+    r.warn.unshift({lvl:'info', msg:`Fit to machine: reduced the ${which} of the recommended value to stay within the ${limitedBy} limit.`});
+  }
+  return r;
+}
 
-  selectMaterial('alu');
-  calc();
+/* =====================================================================
+   RENDER
+   ===================================================================== */
+const $ = id=>document.getElementById(id);
+const $$ = sel=>[...document.querySelectorAll(sel)];
+const esc = s=>String(s).replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+
+function buildStatic(){
+  // material select, grouped
+  const groups = [...new Set(MATERIALS.map(m=>m.group))];
+  $('matSel').innerHTML = groups.map(g=>`<optgroup label="${g}">`+
+    MATERIALS.filter(m=>m.group===g).map(m=>`<option value="${m.key}">${esc(m.name)}</option>`).join('')+'</optgroup>').join('');
+}
+
+function buildToolSelect(){
+  const opt = t=>`<option value="${t.id}">${esc(t.name)}</option>`;
+  let html = '<option value="">— Edited / custom tool —</option>';
+  html += '<optgroup label="Built-in">'+BUILTIN_TOOLS.map(opt).join('')+'</optgroup>';
+  if(state.userTools.length) html += '<optgroup label="My tools">'+state.userTools.map(opt).join('')+'</optgroup>';
+  $('toolSel').innerHTML = html;
+}
+
+function renderInputs(){
+  $$('[data-k]').forEach(el=>{
+    if(el===document.activeElement) return;
+    const v = getPath(el.dataset.k);
+    if(el.type==='checkbox'){ el.checked=!!v; return; }
+    if(el.tagName==='SELECT' || el.type==='text'){ el.value = v==null?'':v; return; }
+    const dim = el.dataset.dim||'num';
+    if(v==null){ el.value=''; return; }
+    const D = du(dim);
+    el.value = +(v*D.f).toFixed(D.d+2);
+  });
+  $$('[data-unit]').forEach(el=>el.textContent = du(el.dataset.unit).u);
+  $$('#unitSeg button').forEach(b=>b.classList.toggle('active', b.dataset.u===state.units));
+  $$('#tabs button').forEach(b=>b.classList.toggle('active', b.dataset.tab===state.tab));
+  $$('.tab').forEach(sec=>sec.classList.toggle('active', sec.id==='tab-'+state.tab));
+  $$('#chartSeg button').forEach(b=>b.classList.toggle('active', b.dataset.v===state.chartView));
+  $$('[data-show]').forEach(el=>el.style.display = el.dataset.show===state.tool.type ? '' : 'none');
+  $('toolSel').value = state.toolEdited ? '' : state.toolId;
+  $('toolState').textContent = state.toolEdited ? 'edited' : '';
+  $('machineName').textContent = state.machine.name;
+  $('aggVal').textContent = state.agg + '% · ' + (state.agg<35?'conservative':state.agg>65?'aggressive':'balanced');
+}
+
+function renderOpSelect(){
+  const ops = OPS_FOR[state.tool.type]||OPS_FOR.flat;
+  state.op = validOp(state.tool.type, state.op);
+  $('opSel').innerHTML = ops.map(o=>`<option value="${o}">${OPS[o].label}</option>`).join('');
+  $('opSel').value = state.op;
+  $('opHint').textContent = OPS[state.op].hint;
+  $$('[data-show-op]').forEach(el=>el.style.display = el.dataset.showOp===state.op ? '' : 'none');
+}
+
+function renderMatInfo(){
+  const m = MAT[state.mat];
+  const sizes = state.units==='mm' ? [3,6,10,12].map(x=>x/25.4) : [.125,.25,.375,.5];
+  const cls = sizes.map(d=>`${diaLabel(d)} <b>${fmt(clInterp(m.cl,d),'small')}</b>`).join(' · ');
+  $('matInfo').innerHTML =
+    `Surface speed <b>${fmt(m.sfm[0],'speed')}–${fmtU(m.sfm[1],'speed')}</b> · unit power <b>${m.kp}</b> hp/in³/min<br>`+
+    `Chip load (${du('small').u}/tooth): ${cls}`+
+    (m.note?`<div class="note">${esc(m.note)}</div>`:'');
+}
+
+function gaugeHTML(label, pct, valueText){
+  const cls = pct>100?'danger':pct>80?'warn':'';
+  return `<div class="gauge"><div class="gk"><span>${label}</span><b>${valueText}</b></div>
+    <div class="bar"><i class="${cls}" style="width:${Math.min(pct,100).toFixed(1)}%"></i></div></div>`;
+}
+
+function renderReadout(r){
+  const op=r.op, drill=op==='drill';
+  const tile=(k,v,unit,extra,big)=>`<div class="tile${big?' big':''}"><div class="k"><span>${k}</span>${extra?`<em>${extra}</em>`:''}</div><div class="v">${v}<small>${unit}</small></div></div>`;
+  const auto = b=>b?'':'manual';
+  let html = '';
+  html += tile('S · spindle', fmt(r.rpm,'rpm'), 'rpm', r.rpmRaw>state.machine.rpmMax*1.005?'capped':r.rpmRaw<state.machine.rpmMin*0.995?'floored':'', true);
+  html += tile('F · feed', fmt(r.feed,'feed'), du('feed').u, r.feedRaw>r.feedLim*1.005?'capped':'', true);
+  html += tile(drill?'Feed / rev':'Plunge', drill?fmt(r.fpr,'small'):fmt(r.plunge,'feed'), drill?du('small').u:du('feed').u, '', true);
+  html += tile(drill?'Peck depth':'DOC', fmt(r.doc,'len'), du('len').u, auto(r.docAuto)||(r.adj&&r.adj.docF<1?'limited':''));
+  html += tile(op==='finish3d'?'Stepover':drill?'Hole Ø':'WOC', fmt(r.woc,'len'), du('len').u, auto(r.wocAuto)||(r.adj&&r.adj.wocF<1?'limited':''));
+  html += tile(drill?'Chip / lip':'Chip load', fmt(r.fzProg,'small'), du('small').u, r.thin>1.01?'×'+r.thin.toFixed(2)+' thinning':'');
+  $('tiles').innerHTML = html;
+
+  const S = 'S'+Math.round(r.rpm), F = 'F'+(state.units==='mm'?Math.round(r.feed*25.4):r.feed.toFixed(1));
+  $('gcode').textContent = drill ? `${S} M3   ${F}   Q${fmt(r.doc,'len')}  (peck)` : `${S} M3   ${F}`;
+
+  $('gauges').innerHTML =
+    gaugeHTML('Spindle load', r.powerPct, Math.round(r.powerPct)+'%') +
+    gaugeHTML('Deflection', drill?0:r.defl/r.deflLim*100, drill?'—':fmt(r.defl,'small')+' '+du('small').u) +
+    gaugeHTML('Breakage risk', drill?0:r.breakPct, drill?'—':Math.round(r.breakPct)+'%');
+
+  $('warns').innerHTML = r.warn.map(w=>`<p class="${w.lvl}">${esc(w.msg)}</p>`).join('');
+
+  const rows = [];
+  rows.push(['Effective cutting diameter', fmtU(r.De,'len') + (r.De<r.D*0.999?` (nominal ${fmt(r.D,'len')})`:'')]);
+  rows.push(['Surface speed: target / actual', `${fmt(r.sfm,'speed')} / ${fmtU(r.sfmAct,'speed')}`]);
+  if(!drill){
+    rows.push(['Chip load: target / actual', `${fmt(r.fz,'small')} / ${fmtU(r.hex,'small')}`]);
+    rows.push(['Chip thinning factor', r.rctf>1.001||r.ballF>1.001 ? `×${r.thin.toFixed(2)} (radial ${r.rctf.toFixed(2)}${r.ballF>1.001?`, ball ${r.ballF.toFixed(2)}`:''})` : 'none']);
+  }
+  rows.push(['Material removal rate', fmtU(r.mrr,'mrr')]);
+  rows.push(['Spindle power: required / available', `${fmt(r.kW,'num')} / ${fmt(r.availKW,'num')} kW (${fmt(r.hp,'num')} hp)`]);
+  rows.push(['Torque: required / available', `${fmt(r.torque,'torque')} / ${fmtU(r.torqueAvail,'torque')}`]);
+  rows.push(['Tangential cutting force', fmtU(r.Ft,'force')]);
+  if(!drill){
+    rows.push(['Tool deflection (limit)', `${fmtU(r.defl,'small')} (${fmt(r.deflLim,'small')})`]);
+    rows.push(['Ramp angle (max)', r.ramp+'°']);
+  }
+  if(r.scallop!=null) rows.push(['Scallop height', fmtU(r.scallop,'small')]);
+  if(r.time!=null) rows.push(['Cut time for length', r.time<1? Math.round(r.time*60)+' s' : r.time.toFixed(1)+' min']);
+  $('details').innerHTML = rows.map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join('');
+
+  $('powerCurve').innerHTML = powerSVG(r, 560, 170);
+}
+
+function powerSVG(r, W, H){
+  const M=state.machine, pad={l:38,r:10,t:10,b:24};
+  const w=W-pad.l-pad.r, h=H-pad.t-pad.b;
+  const x0=0, x1=Math.max(M.rpmMax*1.02, 1000), yMax=Math.max(M.kW, r?r.kW:0)*1.15;
+  const X=v=>pad.l+(v-x0)/(x1-x0)*w, Y=v=>pad.t+h-(v/yMax)*h;
+  const P=rpm=>M.kW*Math.min(1,rpm/M.rpmRated);
+  let pts=[]; for(let i=0;i<=60;i++){ const rpm=x1*i/60; pts.push(`${X(rpm).toFixed(1)},${Y(P(rpm)).toFixed(1)}`); }
+  let g='';
+  for(let k=0;k<=4;k++){ const v=yMax*k/4; g+=`<line x1="${pad.l}" x2="${pad.l+w}" y1="${Y(v)}" y2="${Y(v)}" stroke="#2c3033"/><text x="${pad.l-6}" y="${Y(v)+3}" text-anchor="end">${v.toFixed(1)}</text>`; }
+  for(let k=0;k<=x1;k+=4000){ g+=`<text x="${X(k)}" y="${H-6}" text-anchor="middle">${k/1000}k</text>`; }
+  const band = `<rect x="${X(M.rpmMin)}" y="${pad.t}" width="${X(M.rpmMax)-X(M.rpmMin)}" height="${h}" fill="#f2b705" opacity=".05"/>`;
+  let dot='';
+  if(r){
+    const col = r.powerPct>100?'#e8543a':r.powerPct>80?'#f2b705':'#4fe37a';
+    dot = `<line x1="${X(r.rpm)}" x2="${X(r.rpm)}" y1="${pad.t}" y2="${pad.t+h}" stroke="${col}" stroke-dasharray="3 3" opacity=".6"/>
+           <circle cx="${X(r.rpm)}" cy="${Y(r.kW)}" r="5" fill="${col}"/>
+           <text x="${X(r.rpm)+(X(r.rpm)>W-110?-8:8)}" y="${Math.max(Y(r.kW)-8,pad.t+10)}" text-anchor="${X(r.rpm)>W-110?'end':'start'}" style="fill:${col}">${r.kW.toFixed(2)} kW @ ${Math.round(r.rpm)}</text>`;
+  }
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Spindle power curve">
+    ${band}${g}
+    <polyline points="${pts.join(' ')}" fill="none" stroke="#c7ccd1" stroke-width="2"/>
+    <text x="${pad.l+4}" y="${pad.t+10}">kW</text>
+    ${dot}</svg>`;
+}
+
+/* ---------- chart tab ---------- */
+const DIAS_IN = [1/32,1/16,3/32,1/8,3/16,1/4,5/16,3/8,1/2,5/8,3/4,1];
+const DIAS_MM = [1,1.5,2,3,4,5,6,8,10,12,16,20].map(x=>x/25.4);
+
+function chartTool(d){
+  const t = Object.assign({}, state.tool);
+  const ratio = d/state.tool.d;
+  t.d = d;
+  t.fl = state.tool.fl*ratio; t.so = Math.max(state.tool.so*ratio, 0.5);
+  t.shank = Math.max(d, 0.125);
+  if(t.type==='bull') t.cr = Math.min(state.tool.cr*ratio, d/2);
+  return t;
+}
+function chartRowCells(r){
+  const pc = r.powerPct>100?'danger':r.powerPct>80?'warn':'';
+  const dc = r.defl>r.deflLim*2?'danger':r.defl>r.deflLim?'warn':'';
+  const rc = r.rpmRaw>state.machine.rpmMax*1.005||r.rpmRaw<state.machine.rpmMin*0.995?'dim':'';
+  const fc = r.feedRaw>r.feedLim*1.005?'warn':'';
+  return `<td class="${rc}">${fmt(r.rpm,'rpm')}</td><td>${fmt(r.fzProg,'small')}</td><td class="${fc}">${fmt(r.feed,'feed')}</td>`+
+    `<td>${r.op==='drill'?'—':fmt(r.plunge,'feed')}</td><td>${fmt(r.doc,'len')}</td><td>${fmt(r.woc,'len')}</td>`+
+    `<td>${fmt(r.mrr,'mrr')}</td><td class="${pc}">${Math.round(r.powerPct)}%</td>`+
+    `<td class="${dc}">${r.op==='drill'?'—':fmt(r.defl,'small')}</td>`;
+}
+function renderChart(){
+  const m=MAT[state.mat], t=state.tool, op=validOp(t.type,state.op);
+  const head = (first)=>`<tr><th>${first}</th><th>RPM</th><th>Chip load<br>${du('small').u}</th><th>Feed<br>${du('feed').u}</th><th>Plunge<br>${du('feed').u}</th><th>${op==='drill'?'Peck':'DOC'}<br>${du('len').u}</th><th>${op==='finish3d'?'Stepover':'WOC'}<br>${du('len').u}</th><th>MRR<br>${du('mrr').u}</th><th>Spindle<br>load</th><th>Deflection<br>${du('small').u}</th></tr>`;
+  const base = Object.assign({}, state, {docOv:null, wocOv:null});
+  let html='';
+  if(state.chartView==='dia'){
+    $('chartSummary').innerHTML = `<b>${esc(m.name)}</b> · ${OPS[op].label} · ${t.z}-flute ${TYPE_LABEL[t.type].toLowerCase()} · ${TOOLMAT[t.mat].label} · aggressiveness ${state.agg}% · ${esc(state.machine.name)}`;
+    html += head('Diameter');
+    const dias = state.units==='mm'?DIAS_MM:DIAS_IN;
+    let near = dias.reduce((b,d)=>Math.abs(d-t.d)<Math.abs(b-t.d)?d:b, dias[0]);
+    for(const d of dias){
+      const r = solve(base, chartTool(d));
+      html += `<tr class="${d===near?'current':''}"><td>${diaLabel(d)}</td>${chartRowCells(r)}</tr>`;
+    }
+    $('chartNote').textContent = 'Each row scales the current tool’s flute length and stickout to that diameter. Grey RPM means the spindle limit sets the speed. Amber feed means the machine limit caps it. Amber or red load and deflection values exceed the limits. With "Fit to machine" on, DOC is already reduced to keep within the limits.';
+  } else {
+    $('chartSummary').innerHTML = `<b>${esc(t.name||'Current tool')}</b> · ${diaLabel(t.d)} ${t.z}-flute ${TYPE_LABEL[t.type].toLowerCase()} · ${OPS[op].label} · aggressiveness ${state.agg}%`;
+    html += head('Material');
+    let g=null;
+    for(const mm of MATERIALS){
+      if(mm.group!==g){ g=mm.group; html+=`<tr class="group"><td colspan="10">${g}</td></tr>`; }
+      const r = solve(Object.assign({}, base, {mat:mm.key}), t);
+      html += `<tr class="${mm.key===state.mat?'current':''}"><td style="font-family:var(--f-body)">${esc(mm.name)}</td>${chartRowCells(r)}</tr>`;
+    }
+    $('chartNote').textContent = 'The current tool and operation across every material in the database. The highlighted row is the material selected on the Calculator tab.';
+  }
+  $('chartTable').innerHTML = html;
+}
+
+/* ---------- tools tab ---------- */
+function renderTools(){
+  let html = `<tr><th>Name</th><th>Type</th><th>Diameter</th><th>Flutes</th><th>Flute len</th><th>Stickout</th><th>Shank</th><th>Material</th><th></th></tr>`;
+  const row = (t,user)=>`<tr class="${!state.toolEdited&&t.id===state.toolId?'current':''}"><td style="font-family:var(--f-body)">${esc(t.name)}${user?'':'<span class="tag">built-in</span>'}</td>
+    <td>${TYPE_LABEL[t.type]}${t.type==='vbit'?' '+t.va+'°':t.type==='bull'?' R'+fmt(t.cr,'len',3):''}</td>
+    <td>${fmt(t.d,'len')}</td><td>${t.z}</td><td>${fmt(t.fl,'len')}</td><td>${fmt(t.so,'len')}</td><td>${fmt(t.shank,'len')}</td>
+    <td class="txt">${TOOLMAT[t.mat].label}${t.coat&&t.coat!=='none'?' · '+t.coat.toUpperCase():''}</td>
+    <td><button class="btn small" data-use="${t.id}">Use</button>${user?` <button class="btn small danger" data-del="${t.id}">Delete</button>`:''}</td></tr>`;
+  if(state.userTools.length){
+    html += `<tr class="group"><td colspan="9">My tools</td></tr>` + state.userTools.map(t=>row(t,true)).join('');
+  }
+  html += `<tr class="group"><td colspan="9">Built-in</td></tr>` + BUILTIN_TOOLS.map(t=>row(t,false)).join('');
+  $('toolTable').innerHTML = html;
+}
+
+/* ---------- materials tab ---------- */
+function renderMaterials(){
+  const sizes = state.units==='mm' ? [3,6,10,12].map(x=>x/25.4) : [.125,.25,.375,.5];
+  let html = `<tr><th>Material</th><th>Surface speed<br>${du('speed').u}</th>${sizes.map(d=>`<th>Chip @ ${diaLabel(d)}<br>${du('small').u}</th>`).join('')}<th>Unit power<br>hp/in³/min</th><th style="text-align:left">Notes</th></tr>`;
+  let g=null;
+  for(const m of MATERIALS){
+    if(m.group!==g){ g=m.group; html+=`<tr class="group"><td colspan="${sizes.length+4}">${g}</td></tr>`; }
+    html += `<tr class="${m.key===state.mat?'current':''}"><td style="font-family:var(--f-body)">${esc(m.name)}</td><td>${fmt(m.sfm[0],'speed')}–${fmt(m.sfm[1],'speed')}</td>`+
+      sizes.map(d=>`<td>${fmt(clInterp(m.cl,d),'small')}</td>`).join('')+
+      `<td>${m.kp.toFixed(3)}</td><td class="txt">${esc(m.note)}</td></tr>`;
+  }
+  $('matTable').innerHTML = html;
+}
+
+/* ---------- main update ---------- */
+let lastResult=null;
+function update(){
+  renderOpSelect();
+  const r = solve(state, state.tool);
+  lastResult = r;
+  renderInputs();
+  // recommended values as placeholders for the DOC / WOC override fields
+  $('docIn').placeholder = fmt(r.doc,'len');
+  $('wocIn').placeholder = fmt(r.woc,'len');
+  $('docLabel').innerHTML = r.op==='drill' ? 'Peck depth' : r.op==='finish3d' ? 'Stock to leave (ap)<span class="hint">engagement depth for the finishing pass</span>' : 'Depth of cut (DOC)';
+  $('wocLabel').textContent = r.op==='finish3d' ? 'Stepover' : 'Width of cut (WOC)';
+  $('wocRow').style.display = ['slot','vcarve','drill'].includes(r.op) ? 'none' : '';
+  renderMatInfo();
+  renderReadout(r);
+  if(state.tab==='chart') renderChart();
+  if(state.tab==='tools') renderTools();
+  if(state.tab==='materials') renderMaterials();
+  if(state.tab==='machine') $('powerCurveBig').innerHTML = powerSVG(r, 700, 260);
+  save();
+}
+
+/* =====================================================================
+   EVENTS
+   ===================================================================== */
+function onField(e){
+  const el = e.target.closest('[data-k]'); if(!el) return;
+  const k = el.dataset.k;
+  let v;
+  if(el.type==='checkbox') v = el.checked;
+  else if(el.tagName==='SELECT' || el.type==='text') v = el.value;
+  else {
+    const n = parseFloat(el.value);
+    if(isNaN(n)){ if(el.dataset.null){ v=null; } else return; }
+    else v = n/du(el.dataset.dim||'num').f;
+    if(el.dataset.dim==='int' && v!=null) v = Math.round(v);
+  }
+  setPath(k, v);
+  if(k.startsWith('tool.')) state.toolEdited = true;
+  if(k==='tool.type') state.op = OPS_FOR[v][0];
+  if(k==='tool.type' || k==='op' || k==='mat'){ state.docOv=null; state.wocOv=null; }
+  update();
+}
+document.addEventListener('input', e=>{ if(e.target.matches('input[data-k]')) onField(e); });
+document.addEventListener('change', e=>{ if(e.target.matches('select[data-k], input[type=checkbox][data-k]')) onField(e); });
+// re-format numbers once a field loses focus
+document.addEventListener('focusout', e=>{ if(e.target.matches('input[data-k]')) renderInputs(); });
+
+$('toolSel').addEventListener('change', e=>{ if(e.target.value) useTool(e.target.value); });
+function useTool(id){
+  const t = allTools().find(x=>x.id===id); if(!t) return;
+  if(t.type!==state.tool.type) state.op = OPS_FOR[t.type][0];
+  state.tool = Object.assign({}, t); state.toolId = id; state.toolEdited = false;
+  state.docOv = null; state.wocOv = null;
+  update();
+}
+
+$('saveToolBtn').addEventListener('click', ()=>{
+  const name = $('saveName').value.trim() || `${diaLabel(state.tool.d)} ${state.tool.z}-flute ${TYPE_LABEL[state.tool.type].toLowerCase()}`;
+  const id = 'u-'+Date.now().toString(36);
+  state.userTools.push(Object.assign({}, state.tool, {id, name}));
+  state.tool.name = name; state.toolId = id; state.toolEdited = false;
+  $('saveName').value = '';
+  buildToolSelect(); update();
+});
+
+$('clearOvBtn').addEventListener('click', ()=>{ state.docOv=null; state.wocOv=null; update(); });
+
+$('copyBtn').addEventListener('click', ()=>{
+  const txt = $('gcode').textContent;
+  const done = ()=>{ $('copyBtn').textContent='Copied'; setTimeout(()=>$('copyBtn').textContent='Copy',1200); };
+  try{ navigator.clipboard.writeText(txt).then(done, fallback); }catch(e){ fallback(); }
+  function fallback(){ const ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(e){} ta.remove(); done(); }
+});
+
+$('unitSeg').addEventListener('click', e=>{ const b=e.target.closest('button'); if(b){ state.units=b.dataset.u; update(); } });
+$('tabs').addEventListener('click', e=>{ const b=e.target.closest('button'); if(b){ state.tab=b.dataset.tab; update(); window.scrollTo(0,0); } });
+$('chartSeg').addEventListener('click', e=>{ const b=e.target.closest('button'); if(b){ state.chartView=b.dataset.v; update(); } });
+
+$('toolTable').addEventListener('click', e=>{
+  const u=e.target.closest('[data-use]'), d=e.target.closest('[data-del]');
+  if(u){ useTool(u.dataset.use); state.tab='calc'; update(); }
+  if(d){
+    state.userTools = state.userTools.filter(t=>t.id!==d.dataset.del);
+    if(state.toolId===d.dataset.del) state.toolEdited = true;
+    buildToolSelect(); update();
+  }
+});
+
+$('exportBtn').addEventListener('click', ()=>{
+  const blob = new Blob([JSON.stringify({app:'altmill-sf', version:2, tools:state.userTools, machine:state.machine}, null, 2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'altmill-tools.json';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+});
+$('importBtn').addEventListener('click', ()=>$('importFile').click());
+$('importFile').addEventListener('change', e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const rd = new FileReader();
+  rd.onload = ()=>{
+    try{
+      const data = JSON.parse(rd.result);
+      const tools = Array.isArray(data) ? data : data.tools;
+      if(!Array.isArray(tools)) throw new Error('no tools');
+      const have = new Set(state.userTools.map(t=>t.id));
+      tools.forEach(t=>{ if(t && t.id && !have.has(t.id) && t.d>0) state.userTools.push(Object.assign({}, DEFAULT_STATE.tool, t)); });
+      if(data.machine && confirm('Also import the machine profile from this file?')) state.machine = Object.assign({}, MACHINE_DEFAULT, data.machine);
+      buildToolSelect(); update();
+    }catch(err){ alert('That file does not look like an exported tool library.'); }
+    e.target.value='';
+  };
+  rd.readAsText(f);
+});
+
+$('resetMachineBtn').addEventListener('click', ()=>{ state.machine = Object.assign({}, MACHINE_DEFAULT); update(); });
+
+buildStatic();
+buildToolSelect();
+update();
+
 })();
 </script>
-
 </body>
 </html>

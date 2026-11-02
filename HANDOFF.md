@@ -1,5 +1,7 @@
 # CNC Speeds & Feeds Calculator — Handoff
 
+> **Status, 2026-11-02:** The app has been rebuilt as an offline desktop program for the PC; the iPhone is no longer the target. Everything below describes the original phone version and is kept as background. From the "Next up" list, these are now built: ball-nose effective diameter, scallop and chip thinning (#1); the tool library (#3); saved settings (#4); offline use (#5: system fonts plus a desktop shortcut instead of a PWA); and DOC/WOC recommendations and plunge feed (#6). Still open: a Z-axis vector-feed check for steep 3D walls (#2). See `CLAUDE.md` for how the code is organized now.
+
 ## What this is
 A single-file, mobile-first web app (`cnc-speeds-feeds.html`, no build step, vanilla JS/CSS) that the owner installs on their iPhone via Safari > Share > Add to Home Screen. It calculates spindle RPM and feed rate for CNC milling and clamps results to the owner's actual machine limits. Design language: shop-floor control panel (dark panels, amber accent, green-on-black "readout" screen; Oswald / Roboto Mono / Inter).
 
