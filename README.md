@@ -4,13 +4,13 @@ RPM and feed-rate calculator for the Sienci AltMill Mk2 + 2.2 kW ATC spindle.
 
 ## Use it
 - **On this PC:** double-click `index.html` to open it in your browser.
-- **On the iPhone:** the page has to be served from a web address. Safari can't add a local file to the home screen. The easiest option is free GitHub Pages hosting (see below). Then open the link in Safari, tap Share, then Add to Home Screen.
+- **On the iPhone:** open https://briannapierstudio.github.io/altmill-sf-calc/ in Safari, tap Share, then Add to Home Screen. GitHub Pages republishes the page about a minute after each push.
 
 ## Change it
 Open a Claude Code session in this folder and describe the change. `CLAUDE.md` and `HANDOFF.md` give Claude the background, and the planned features are listed under "Next up" in `HANDOFF.md`.
 
 ## Keep the shop and home PCs in sync
-The project lives on GitHub at https://github.com/briannapierstudio/altmill-sf-calc (private).
+The project lives on GitHub at https://github.com/briannapierstudio/altmill-sf-calc (public, so GitHub Pages can host it).
 
 **First-time setup on another PC** (run in PowerShell):
 ```
