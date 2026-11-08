@@ -111,6 +111,19 @@
   .btn.small{padding:4px 8px;font-size:11px;}
   .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
 
+  .code-row input, .paste-box textarea{
+    background:var(--panel-2);border:1px solid var(--border);border-radius:4px;padding:6px 8px;font-size:13px;color:var(--text);
+  }
+  .code-row input{flex:1;min-width:0;font-family:var(--f-mono);}
+  .code-row input:focus, .paste-box textarea:focus{outline:none;border-color:var(--accent);}
+  .paste-box{display:none;margin-top:8px;}
+  .paste-box.show{display:block;}
+  .paste-box textarea{width:100%;height:76px;resize:vertical;font-family:var(--f-body);font-size:12.5px;margin-bottom:6px;}
+  .code-msg{font-size:12px;line-height:1.45;margin:6px 0 8px;color:var(--text-dim);}
+  .code-msg:empty{display:none;}
+  .code-msg.ok{color:var(--ok);} .code-msg.bad{color:var(--warn);}
+  .code-msg .check{display:block;color:var(--warn);margin-top:3px;}
+
   .mat-info{font-size:12px;color:var(--text-dim);line-height:1.5;margin-top:8px;}
   .mat-info b{color:var(--text);font-weight:600;}
   .mat-info .note{margin-top:6px;color:var(--warn);}
@@ -217,6 +230,15 @@
 
       <div class="panel">
         <div class="label">Tool <span class="sub" id="toolState"></span></div>
+        <div class="row code-row" style="flex-wrap:nowrap;margin-bottom:6px;">
+          <input type="text" id="codeIn" placeholder="Scan or type bit code" autocomplete="off" spellcheck="false">
+          <button class="btn" id="codeBtn">Look up</button>
+        </div>
+        <div class="code-msg" id="codeMsg"></div>
+        <div class="paste-box" id="pasteBox">
+          <textarea id="pasteIn" placeholder="Paste the text from the label or product title, for example: 1/4 Dia x 1-1/4 CH x 1/4 Shank 3 Inch L"></textarea>
+          <div class="row"><button class="btn" id="pasteBtn">Read and save</button><button class="btn small" id="pasteCancel">Cancel</button></div>
+        </div>
         <select class="wide" id="toolSel"></select>
         <div style="margin-top:6px;">
           <div class="field">
@@ -251,6 +273,16 @@
               <option value="zrn">ZrN / TiB2 (non-ferrous)</option>
               <option value="tialn">TiAlN / AlTiN (ferrous)</option>
               <option value="dia">Diamond / DLC</option>
+              <option value="spektra">Amana Spektra (nACo)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Cut direction</label>
+            <select data-k="tool.cut">
+              <option value="">Not specified</option>
+              <option value="up">Up-cut</option>
+              <option value="down">Down-cut</option>
+              <option value="comp">Compression</option>
             </select>
           </div>
         </div>
@@ -316,6 +348,7 @@
         <div class="gauges" id="gauges"></div>
       </div>
       <div class="warns" id="warns"></div>
+      <div class="panel" id="mfrPanel" style="display:none;"></div>
       <div class="panel">
         <div class="label">Details</div>
         <table class="details" id="details"></table>
@@ -456,7 +489,40 @@ const COATING = {
   zrn:  c=>(c==='nonferrous'||c==='plastic')?1.10:1.00,
   tialn:c=>(c==='ferrous'||c==='hard')?1.20:1.00,
   dia:  c=>(c==='composite'||c==='wood'||c==='nonferrous')?1.15:1.00,
+  spektra:()=>1,  // Amana sells it on tool life and gives no surface-speed gain, so speed is unchanged
 };
+
+// Amana chart "Solid Carbide Spektra Extreme Tool Life Coated Spiral Plunge Router Bits" (v16).
+// Basis: 18,000 RPM, depth of cut 1 x D. Reduce chip load 25% at 2 x D and 50% at 3 x D.
+// Only rows that could be read with certainty are listed. [IPM, chip load, ramp IPM]
+const AMANA_SPEKTRA_PLUNGE = [
+  {d:.125, parts:['46127-K','46227-K','46100-K','46200-K','46125-K','46225-K'], wood:[145,.004,72.5], mdf:[180,.005,90]},
+  {d:.1875,parts:['46101-K','46201-K'], wood:[180,.005,90], mdf:[215,.006,107.5]},
+  {d:.25,  parts:['46102-K','46202-K','46315-K','46415-K','46316-K','46416-K','46321-K','46421-K'], wood:[180,.005,90], mdf:[215,.006,107.5]},
+];
+const AMANA_RPM = 18000;
+const AMANA_MATS = {wood:['softwood','hardwood','ply'], mdf:['mdf','particle','hdf']};
+const AMANA_LABEL = {wood:'Wood / plywood', mdf:'MDF / laminate'};
+const amanaRow = t=>{
+  if(!t.part) return null;
+  const row = AMANA_SPEKTRA_PLUNGE.find(r=>r.parts.includes(t.part));
+  return row && Math.abs(row.d-t.d)<0.001 ? row : null;
+};
+// The chart's rate for this tool and material, or null when it has none.
+function mfrRate(s, t, op){
+  const row = s.useMfr ? amanaRow(t) : null;
+  if(!row || op==='drill' || op==='vcarve') return null;
+  const group = Object.keys(AMANA_MATS).find(g=>AMANA_MATS[g].includes(s.mat));
+  if(!group) return null;
+  const [ipm, cl, ramp] = row[group];
+  return {group, ipm, cl, ramp, rpm:AMANA_RPM};
+}
+function amanaDocFactor(x){
+  if(x<=1) return 1;
+  if(x<=2) return 1-0.25*(x-1);
+  if(x<=3) return 0.75-0.25*(x-2);
+  return 0.5;
+}
 const COOLANT = {
   dry:  c=>METAL(c)?0.85:1,
   air:  ()=>1,
@@ -485,7 +551,7 @@ const OPS_FOR = {
 };
 const TYPE_LABEL = {flat:'Flat',ball:'Ball',bull:'Bull',vbit:'V-bit',drill:'Drill'};
 
-const T = (id,name,type,d,z,fl,so,shank,extra)=>Object.assign({id,name,type,d,z,fl,so,shank,cr:0,va:90,mat:'carbide',coat:'none'},extra||{});
+const T = (id,name,type,d,z,fl,so,shank,extra)=>Object.assign({id,name,type,d,z,fl,so,shank,cr:0,va:90,mat:'carbide',coat:'none',cut:'',part:'',oal:0,codes:[]},extra||{});
 const BUILTIN_TOOLS = [
   T('b-up18','1/8" 2-flute upcut','flat',.125,2,.5,.75,.25),
   T('b-up14','1/4" 2-flute upcut','flat',.25,2,.75,1.0,.25),
@@ -505,6 +571,8 @@ const BUILTIN_TOOLS = [
   T('b-v60','1/2" 60° V-bit','vbit',.5,2,.43,.75,.25,{va:60}),
   T('b-v90','1/2" 90° V-bit','vbit',.5,2,.25,.75,.25,{va:90}),
   T('b-dr14','1/4" carbide drill','drill',.25,2,1.0,1.5,.25),
+  // Stickout is an assumption (3" overall minus about 1" in the collet); the rest is from the label and Amana's chart.
+  T('b-46421k','Amana 46421-K 1/4" Spektra down-cut','flat',.25,2,1.25,2.0,.25,{coat:'spektra',cut:'down',part:'46421-K',oal:3,codes:['X00547FZ3H','46421-K']}),
 ];
 
 const MACHINE_DEFAULT = {
@@ -519,7 +587,7 @@ const MACHINE_DEFAULT = {
 const STORE_KEY = 'altmill-sf-v2';
 const DEFAULT_STATE = {
   units:'in', tab:'calc', chartView:'dia',
-  mat:'hardwood', op:'profile', agg:50, coolant:'air', limit:true, plungePct:10,
+  mat:'hardwood', op:'profile', agg:50, coolant:'air', limit:true, plungePct:10, useMfr:true,
   docOv:null, wocOv:null, scallop:0.001, cutLen:0,
   toolId:'b-up14', toolEdited:false,
   tool:Object.assign({}, BUILTIN_TOOLS[1]),
@@ -658,6 +726,8 @@ function compute(s, t, adj){
   // --- speed ---
   let sfm = (m.sfm[0]+(m.sfm[1]-m.sfm[0])*a) * tm.sfm * COATING[t.coat||'none'](m.cls) * COOLANT[s.coolant](m.cls);
   if(op==='drill') sfm *= 0.7;
+  const rate = mfrRate(s, t, op);
+  if(rate) sfm = rate.rpm*Math.PI*De/12;
   const rpmRaw = sfm*12/(Math.PI*De);
   const rpm = Math.min(Math.max(rpmRaw, M.rpmMin), M.rpmMax);
   const sfmAct = rpm*Math.PI*De/12;
@@ -666,9 +736,9 @@ function compute(s, t, adj){
   const clBase = clInterp(m.cl, t.type==='vbit' ? De : D);
   const opF = {slot:.85,profile:1,adaptive:1,pocket:.95,finish:.75,surface:.9,rough3d:.9,finish3d:.8,vcarve:.7,drill:1}[op];
   const rigCl = 0.5+0.5*M.rigidity;
-  const fz = clBase*tm.cl*(0.8+0.4*a)*opF*rigCl;
+  const fz = rate ? rate.cl*amanaDocFactor(doc/D) : clBase*tm.cl*(0.8+0.4*a)*opF*rigCl;
   let rctf=1, ballF=1;
-  if(!wocFixed && woc>0 && woc<De/2) rctf = De/(2*Math.sqrt(De*woc-woc*woc));
+  if(!rate && !wocFixed && woc>0 && woc<De/2) rctf = De/(2*Math.sqrt(De*woc-woc*woc));
   if((t.type==='ball'||t.type==='bull') && De<D*0.999) ballF = D/De;
   const thin = Math.min(rctf*ballF, 4);
 
@@ -747,13 +817,15 @@ function compute(s, t, adj){
   else if(defl>deflLim) W('warn',`Tool deflection of about ${fmtU(defl,'small')} is above the ${fmtU(deflLim,'small')} target for this operation. Shorten the stickout or lighten the cut.`);
   if(breakPct>100) W('danger',`Bending stress is ${Math.round(breakPct)}% of the tool's safe limit. High risk of breakage.`);
   else if(breakPct>60) W('warn',`Bending stress is ${Math.round(breakPct)}% of the tool's safe limit.`);
+  if(t.cut==='down' && op!=='drill') W('info','Down-cut bits push chips into the cut instead of lifting them out. Keep passes shallow in slots and pockets, and leave chip clearance in the spoilboard.');
+  if(rate && doc/D>3) W('warn',`This depth is ${(doc/D).toFixed(1)} x D. Amana's chart only gives reductions up to 3 x D, so the chip load is held at its 3 x D value (50%).`);
   if(t.mat!=='carbide' && (m.cls==='wood'||m.cls==='composite')) W('info','HSS dulls quickly in wood products and composites. Carbide is strongly recommended.');
   if(m.cls==='ferrous' || m.cls==='hard') W('info','Ferrous and exotic metals push a gantry router hard. Use adaptive toolpaths, short stickout, and a rigid fixture.');
   if(op==='drill' && feedRaw>feedLim*1.005) {/* already covered */}
 
   return {op,doc,woc,docAuto,wocAuto,docMax,De,D,z,sfm,sfmAct,rpmRaw,rpm,fz,fzProg,hex,rctf,ballF,thin,
           feedRaw,feed,feedLim,fpr,plunge,ramp:c.ramp,mrr,kW,hp:kW/0.7457,availKW,powerPct,torque,torqueAvail,
-          Ft,defl,deflLim,breakPct,scallop,time,warn,m,t};
+          Ft,defl,deflLim,breakPct,scallop,time,warn,m,t,rate};
 }
 
 // Wraps compute(): when "Fit to machine" is on, shrinks the recommended depth until
@@ -824,6 +896,7 @@ function renderInputs(){
   $$('[data-show]').forEach(el=>el.style.display = el.dataset.show===state.tool.type ? '' : 'none');
   $('toolSel').value = state.toolEdited ? '' : state.toolId;
   $('toolState').textContent = state.toolEdited ? 'edited' : '';
+  $('saveToolBtn').textContent = state.toolEdited && state.userTools.some(t=>t.id===state.toolId) ? 'Update tool' : 'Save tool';
   $('machineName').textContent = state.machine.name;
   $('aggVal').textContent = state.agg + '% · ' + (state.agg<35?'conservative':state.agg>65?'aggressive':'balanced');
 }
@@ -875,6 +948,7 @@ function renderReadout(r){
     gaugeHTML('Breakage risk', drill?0:r.breakPct, drill?'—':Math.round(r.breakPct)+'%');
 
   $('warns').innerHTML = r.warn.map(w=>`<p class="${w.lvl}">${esc(w.msg)}</p>`).join('');
+  renderMfrPanel(r);
 
   const rows = [];
   rows.push(['Effective cutting diameter', fmtU(r.De,'len') + (r.De<r.D*0.999?` (nominal ${fmt(r.D,'len')})`:'')]);
@@ -896,6 +970,20 @@ function renderReadout(r){
   $('details').innerHTML = rows.map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join('');
 
   $('powerCurve').innerHTML = powerSVG(r, 560, 170);
+}
+
+function renderMfrPanel(r){
+  const row = amanaRow(r.t), el = $('mfrPanel');
+  el.style.display = row ? '' : 'none';
+  if(!row) return;
+  const rowHTML = g=>`<tr><td>${AMANA_LABEL[g]}</td><td>${fmtU(row[g][0],'feed')} · ${fmtU(row[g][1],'small')} chip · ramp ${fmtU(row[g][2],'feed')}</td></tr>`;
+  let status;
+  if(!state.useMfr) status = 'Turned off. The numbers above come from the calculator.';
+  else if(r.rate) status = `In use above for ${esc(AMANA_LABEL[r.rate.group].toLowerCase())}: chip load ${fmtU(r.fz,'small')} after the depth reduction. Aggressiveness, rigidity and chip thinning don't change the rate while this is on.`;
+  else status = 'This material or operation isn\'t on the chart, so the numbers above come from the calculator.';
+  el.innerHTML = `<div class="label">Amana rates · ${esc(r.t.part)} <span class="sub"><label><input type="checkbox" data-k="useMfr" ${state.useMfr?'checked':''} style="vertical-align:-3px;"> Use these rates</label></span></div>
+    <table class="details">${rowHTML('wood')}${rowHTML('mdf')}</table>
+    <p class="muted" style="margin:8px 0 0;">Chart basis: ${fmt(AMANA_RPM,'rpm')} rpm at 1 x D depth. Reduce chip load 25% at 2 x D and 50% at 3 x D. ${status} Amana calls these recommendations only. Your plunge setting still applies instead of the chart's ramp rate.</p>`;
 }
 
 function powerSVG(r, W, H){
@@ -933,6 +1021,7 @@ function chartTool(d){
   t.d = d;
   t.fl = state.tool.fl*ratio; t.so = Math.max(state.tool.so*ratio, 0.5);
   t.shank = Math.max(d, 0.125);
+  t.part = '';  // a scaled tool is no longer the catalog part
   if(t.type==='bull') t.cr = Math.min(state.tool.cr*ratio, d/2);
   return t;
 }
@@ -978,7 +1067,7 @@ function renderChart(){
 /* ---------- tools tab ---------- */
 function renderTools(){
   let html = `<tr><th>Name</th><th>Type</th><th>Diameter</th><th>Flutes</th><th>Flute len</th><th>Stickout</th><th>Shank</th><th>Material</th><th></th></tr>`;
-  const row = (t,user)=>`<tr class="${!state.toolEdited&&t.id===state.toolId?'current':''}"><td style="font-family:var(--f-body)">${esc(t.name)}${user?'':'<span class="tag">built-in</span>'}</td>
+  const row = (t,user)=>`<tr class="${!state.toolEdited&&t.id===state.toolId?'current':''}"><td style="font-family:var(--f-body)">${esc(t.name)}${user?'':'<span class="tag">built-in</span>'}${(t.codes||[]).length?`<span class="hint" style="display:block;font-size:11px;color:var(--text-dim);">Codes: ${t.codes.map(esc).join(', ')}</span>`:''}</td>
     <td>${TYPE_LABEL[t.type]}${t.type==='vbit'?' '+t.va+'°':t.type==='bull'?' R'+fmt(t.cr,'len',3):''}</td>
     <td>${fmt(t.d,'len')}</td><td>${t.z}</td><td>${fmt(t.fl,'len')}</td><td>${fmt(t.so,'len')}</td><td>${fmt(t.shank,'len')}</td>
     <td class="txt">${TOOLMAT[t.mat].label}${t.coat&&t.coat!=='none'?' · '+t.coat.toUpperCase():''}</td>
@@ -1061,7 +1150,167 @@ function useTool(id){
   update();
 }
 
+/* ---------- bit codes ---------- */
+const normCode = s=>String(s).toUpperCase().replace(/[^A-Z0-9]/g,'');
+function findByCode(code){
+  const n = normCode(code);
+  if(!n) return null;
+  return state.userTools.concat(BUILTIN_TOOLS).find(t=>(t.codes||[]).some(c=>normCode(c)===n)) || null;
+}
+const LEN = '(\\d+-\\d+\\/\\d+|\\d+\\/\\d+|\\d*\\.\\d+|\\d+)\\s*(mm)?\\s*(?:"|\\u201d|inch(?:es)?\\b|in\\b)?\\s*';
+function lenToInches(num, mm){
+  let v;
+  const mixed = /^(\d+)-(\d+)\/(\d+)$/.exec(num), frac = /^(\d+)\/(\d+)$/.exec(num);
+  if(mixed) v = +mixed[1] + mixed[2]/mixed[3];
+  else if(frac) v = frac[1]/frac[2];
+  else v = parseFloat(num);
+  return mm ? v/25.4 : v;
+}
+// Finds "<length> <keyword>", such as 1/4 Dia or 2-1/2"OL.
+function lenBefore(text, keys){
+  const m = new RegExp('(?:^|[^\\d/.-])'+LEN+'(?:'+keys+')(?![a-z])','i').exec(text);
+  return m ? lenToInches(m[1], m[2]) : null;
+}
+// Finds "<label>: <length>", such as Cutting Diameter: 5/16".
+function lenAfter(text, labels){
+  const m = new RegExp('(?:'+labels+')\\s*[:=]\\s*'+LEN,'i').exec(text);
+  return m ? lenToInches(m[1], m[2]) : null;
+}
+// Reads a product title or label. Returns null when no cutting diameter can be found.
+function parseBitText(raw){
+  const text = String(raw)
+    .replace(/[–—]/g,'-')
+    .replace(/\s+/g,' ')
+    .replace(/(\d)\s*-\s*(\d+\/\d+)/g,'$1-$2')
+    .replace(/\b(\d{5})\s*-\s*([A-Z]{1,3})\b/g,'$1-$2')
+    .replace(/(^|\s)[23]-?D(?![a-z])/gi,'$1');
+  const has = re=>re.test(text);
+  const d = lenAfter(text,'cutting\\s*diameter|cut\\s*diameter|^diameter') ?? lenBefore(text,'dia(?:meter)?|d');
+  const radius = lenBefore(text,'r|radius');
+  const isBall = has(/ball\s*-?\s*nose/i);
+  const dia = d ?? (isBall && radius ? radius*2 : null);
+  if(!dia || !(dia>0)) return null;
+
+  const assumed = [];
+  let type = 'flat';
+  if(isBall) type = 'ball';
+  else if(has(/bull\s*-?\s*nose|corner\s*radius/i)) type = 'bull';
+  else if(has(/\bv\s*-?\s*(?:bit|groove|carv)|engrav|chamfer/i)) type = 'vbit';
+  else if(has(/\bdrill\b/i)) type = 'drill';
+
+  let z = null;
+  const zm = /flutes?\s*[:=]\s*(\d+)/i.exec(text);
+  if(zm) z = +zm[1];
+  else if(has(/single\s*-?\s*flute|\bo\s*-?\s*flute|\b1\s*-?\s*flute/i)) z = 1;
+  else if(has(/double\s*-?\s*flute|two\s*-?\s*flute|\b2\s*-?\s*flute/i)) z = 2;
+  else if(has(/triple\s*-?\s*flute|three\s*-?\s*flute|\b3\s*-?\s*flute/i)) z = 3;
+  else if(has(/four\s*-?\s*flute|\b4\s*-?\s*flute/i)) z = 4;
+  if(z==null){ z = 2; assumed.push('2 flutes'); }
+
+  let fl = lenAfter(text,'cutting\\s*(?:height|length)|cut\\s*length|flute\\s*length') ?? lenBefore(text,'ch|cl|cut(?:ting)?\\s*(?:height|length)|flute\\s*length');
+  let shank = lenAfter(text,'shank(?:\\s*diameter)?') ?? lenBefore(text,'shk|shank|sh');
+  const oal = lenAfter(text,'(?:total|overall)\\s*length') ?? lenBefore(text,'oal|ol|overall(?:\\s*length)?|long|length|l');
+  const vm = /(\d{2,3})\s*(?:°|deg(?:ree)?s?\b)/i.exec(text);
+  const va = vm ? +vm[1] : 90;
+  // Amana often leaves the cutting height unlabeled: 1/8 Dia x 13/16 x 1/4 Inch Shank
+  if(fl==null){
+    const m = new RegExp('dia(?:meter)?\\s*x\\s*'+LEN+'x','i').exec(text);
+    if(m) fl = lenToInches(m[1], m[2]);
+  }
+  if(fl==null){
+    fl = type==='vbit' ? (dia/2)/Math.tan(va*Math.PI/360) : dia*3;
+    assumed.push('flute length '+fmtU(fl,'len'));
+  }
+  if(type==='vbit' && !vm) assumed.push('90° V angle');
+  if(shank==null){ shank = dia; assumed.push('shank '+fmtU(shank,'len')); }
+  const so = Math.max(fl+0.125, oal ? oal-1 : fl+0.5);
+  assumed.push('stickout '+fmtU(so,'len'));
+
+  const cut = has(/compression/i) ? 'comp' : has(/down\s*-?\s*(?:cut|spiral|shear)/i) ? 'down' : has(/up\s*-?\s*(?:cut|spiral|shear)/i) ? 'up' : '';
+  const coat = has(/spektra/i) ? 'spektra' : has(/\bzrn\b|zirconium/i) ? 'zrn' : has(/altin|tialn/i) ? 'tialn' : has(/diamond|\bdlc\b/i) ? 'dia' : 'none';
+  const mat = has(/cobalt/i) ? 'cobalt' : has(/\bhss\b|high\s*speed\s*steel/i) ? 'hss' : 'carbide';
+  const pm =/(?:^|[^\d-])(\d{5})(?:-?([A-Z]{1,3}))?(?![\dA-Za-z])/.exec(text);
+  const part = pm ? pm[1]+(pm[2]?'-'+pm[2].toUpperCase():'') : '';
+  const fn = /\bX00[A-Z0-9]{7}\b/i.exec(text);
+
+  const brand = has(/amana/i) ? 'Amana ' : '';
+  const cutName = {up:' up-cut',down:' down-cut',comp:' compression'}[cut]||'';
+  const diaName = /\d\s*mm/i.test(text) ? +(dia*25.4).toFixed(2)+' mm' : diaLabel(dia);
+  const name = `${brand}${part?part+' ':''}${diaName}${coat==='spektra'?' Spektra':''}${cutName}${type==='flat'?'':' '+TYPE_LABEL[type].toLowerCase()}`;
+  const tool = Object.assign({}, DEFAULT_STATE.tool, {name,type,d:dia,z,fl,so,shank,mat,coat,cut,part,oal:oal||0,
+    cr:type==='bull'&&radius?radius:0, va, codes:[]});
+  if(fn) tool.codes.push(fn[0].toUpperCase());
+  if(part) tool.codes.push(part);
+  return {tool, assumed};
+}
+
+function setCodeMsg(cls, html){ const el=$('codeMsg'); el.className='code-msg '+cls; el.innerHTML=html; }
+const showPaste = on=>{ $('pasteBox').classList.toggle('show',on); if(on) $('pasteIn').focus(); };
+let pendingCode = '';
+
+function lookupCode(raw){
+  const text = raw.trim();
+  if(!text) return;
+  if(/\s/.test(text) && text.length>20){ readBitText(text); return; }
+  const t = findByCode(text);
+  if(t){
+    useTool(t.id);
+    showPaste(false); pendingCode=''; $('codeIn').value='';
+    const check = !t.id.startsWith('u-') && t.part==='46421-K' ? '<span class="check">Check the stickout: 2" is assumed. Set it to match how far the bit sticks out of your collet.</span>' : '';
+    setCodeMsg('ok', `Found <b>${esc(t.name)}</b>.${check}`);
+    return;
+  }
+  pendingCode = text;
+  const amazon = /^X00/i.test(normCode(text));
+  setCodeMsg('bad', `<b>${esc(text)}</b> isn't saved yet. ${amazon?'X00 codes are Amazon labels and can\'t be looked up. ':''}Paste the text from the label or product title below, and the app will remember this code.`);
+  showPaste(true);
+}
+
+function readBitText(text){
+  const parsed = parseBitText(text);
+  if(!parsed){
+    setCodeMsg('bad','Couldn\'t find a cutting diameter in that text. It needs something like <b>1/4 Dia</b> or <b>1/4"D</b>. You can also set the tool up by hand below and click Save tool.');
+    showPaste(true);
+    return;
+  }
+  const {tool, assumed} = parsed;
+  const codes = tool.codes.concat(pendingCode?[pendingCode]:[]);
+  const known = codes.map(findByCode).find(Boolean);
+  let saved, verb;
+  if(known){
+    saved = known.id.startsWith('u-') ? known : Object.assign({}, known, {id:'u-'+Date.now().toString(36), codes:[...known.codes]});
+    if(saved!==known) state.userTools.push(saved);
+    verb = 'Already known';
+  } else {
+    saved = Object.assign(tool, {id:'u-'+Date.now().toString(36), codes:[]});
+    state.userTools.push(saved);
+    verb = 'Saved';
+  }
+  codes.forEach(c=>{ if(!saved.codes.some(x=>normCode(x)===normCode(c))) saved.codes.push(c.toUpperCase()); });
+  pendingCode='';
+  buildToolSelect();
+  useTool(saved.id);
+  showPaste(false);
+  $('pasteIn').value=''; $('codeIn').value='';
+  const rates = amanaRow(saved) ? ' Amana\'s chart rates are available for this bit.' : '';
+  const check = !known && assumed.length ? `<span class="check">Check these, they weren't in the text: ${esc(assumed.join(', '))}.</span>` : '';
+  setCodeMsg('ok', `${verb}: <b>${esc(saved.name)}</b>. Codes: ${saved.codes.map(esc).join(', ')}.${rates}${check}`);
+}
+
+$('codeBtn').addEventListener('click', ()=>lookupCode($('codeIn').value));
+// USB barcode scanners type the code and then press Enter.
+$('codeIn').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); lookupCode($('codeIn').value); } });
+$('pasteBtn').addEventListener('click', ()=>readBitText($('pasteIn').value));
+$('pasteCancel').addEventListener('click', ()=>{ pendingCode=''; showPaste(false); setCodeMsg('',''); });
+
 $('saveToolBtn').addEventListener('click', ()=>{
+  const current = state.userTools.find(t=>t.id===state.toolId);
+  if(current && state.toolEdited && !$('saveName').value.trim()){
+    Object.assign(current, state.tool, {id:current.id, name:current.name, codes:current.codes});
+    state.tool.name = current.name; state.toolEdited = false;
+    buildToolSelect(); update();
+    return;
+  }
   const name = $('saveName').value.trim() || `${diaLabel(state.tool.d)} ${state.tool.z}-flute ${TYPE_LABEL[state.tool.type].toLowerCase()}`;
   const id = 'u-'+Date.now().toString(36);
   state.userTools.push(Object.assign({}, state.tool, {id, name}));

@@ -10,7 +10,9 @@ An offline speeds & feeds program for the Sienci AltMill Mk2 with the 2.2 kW ATC
 - **Chip thinning compensation:** radial chip thinning and ball-nose effective diameter.
 - **Fit to machine:** automatically reduces depth of cut when spindle power, deflection or breakage limits are exceeded.
 - **Chart tab:** a full speeds & feeds chart across 12 tool diameters, or across every material. It's printable.
-- **Tool library:** 18 built-in tools, plus your own. Use Export/Import to move them between PCs.
+- **Tool library:** 19 built-in tools, plus your own. Use Export/Import to move them between PCs.
+- **Bit codes:** type or scan a code from the packaging (Amazon `X00…` label or maker part number) to load the bit. The first time, paste the label or product title and the app reads the dimensions and remembers the code.
+- **Manufacturer rates:** Amana's published rates for its Spektra spiral plunge bits, with a switch to go back to the calculator's numbers.
 - **Machine tab:** an editable machine profile with a power-curve graph.
 - **Units:** inch and metric.
 
